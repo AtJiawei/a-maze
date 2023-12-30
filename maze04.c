@@ -1,6 +1,5 @@
 // this version is to check if we can use emojis to represent the elements in the maze. Also updated newY = newY + 1 to newY++ to shorten the codes.
 #include <stdio.h>
-#include <ncurses.h>
 
 // define the global variables
 const char *PATH = "🌿";
