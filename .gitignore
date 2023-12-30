@@ -1,4 +1,9 @@
 .DS_Store
+
+/bazel-*
+/MODULE.bazel
+/MODULE.bazel.lock
+
 /maze
 /maze01
 /maze02
