@@ -1,29 +1,75 @@
 #include <ncurses.h>
 #include <locale.h>
+#include <wchar.h>
+#include <assert.h>
+
+const char *PATH = "   "; // "🔘";
+const char *GOAL = "🚩";
+const char *PLAYER = "🚶";
+const char *WALL = "🌲";
+const char *START = "📌";
+
+const int MAZE_ROWS = 7;
+const int MAZE_COLS = 7;
+
+void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
+{
+    for (int i = 0; i < MAZE_ROWS; i++)
+    {
+        for (int j = 0; j < MAZE_COLS; j++)
+        {
+            // mvprintw((i + 4), (j + 3), "%s ", maze[i][j]);
+            mvaddstr(4 + i, 3 + j * 2, maze[i][j]);
+        }
+    }
+}
+// https://stackoverflow.com/questions/61690230/chinese-character-too-large-for-enclosing-character-literal-type
+// https://man7.org/linux/man-pages/man3/wcwidth.3.html
 
 int main()
 {
+    // Set the locale to the user preferred locale. The default is a minimal locale.
     setlocale(LC_ALL, "");
 
-    int c;
-    int y = 11, x = 11; // @coordinates
-    char i;             // our symbol
+    // Ensure that all characters we use to print the maze are indeed of printing width 2.
+    assert(wcwidth(U'🔘') == 2);
+    assert(wcwidth(U'🚩') == 2);
+    assert(wcwidth(U'🚶') == 2);
+    assert(wcwidth(U'🌲') == 2);
+    assert(wcwidth(U'📌') == 2);
 
-    initscr(); // initial curses
+    // Player position.
+    int y = 1, x = 1;
+
+    // Initialize the screen buffer for ncurses.
+    initscr();
     keypad(stdscr, 1);
 
     noecho();    // do not show the user input
     curs_set(0); // hide blinking cursor
 
-    mvprintw(0, 6, "Chose any numeric or character key as your avatar by clicking them once. Then use arrows to move the avatar around\n");
-    mvprintw(1, 11, "Press Esc to exit the game\n");
-    i = getch(); // get symbol
+    const char *maze[MAZE_ROWS][MAZE_COLS] =
+        {
+            {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
+            {WALL, START, PATH, WALL, PATH, WALL, WALL},
+            {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
+            {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
+            {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
+            {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
+            {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
 
-    do
+    while (true)
     {
+        // Draw.
         clear();
-        mvprintw(0, 6, "Chose any numeric or character key as your avatar by clicking them once. Then use arrows to move the avatar\n");
-        mvprintw(1, 11, "Press Esc to exit the game\n");
+        printMaze(maze);
+        mvprintw(4 + y, 3 + x * 2, "🚶");
+
+        // Process input.
+        int c = getch();
+
+        if (c == 27)
+            break;
         if (c == KEY_UP)
             y--;
         if (c == KEY_DOWN)
@@ -32,13 +78,8 @@ int main()
             x--;
         if (c == KEY_RIGHT)
             x++;
+    }
 
-        mvprintw(y, x, "🚶");
-        // mvaddch(y, x, i); // be careful that this starts with y. put symbol at location (y,x)
-    } while ((c = getch()) != 27); // 27 'Esc'
-
-    // refresh();// needed when there is not a while loop. refresh the location
-    // getch(); // needed when there is not a while loop so that the window will not refresh and immediately close -> you can then see the change
     endwin();
 
     return 0;
