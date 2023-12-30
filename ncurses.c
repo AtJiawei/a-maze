@@ -9,8 +9,8 @@ const char *PLAYER = "🚶";
 const char *WALL = "🌲";
 const char *START = "📌";
 
-const int MAZE_ROWS = 7;
-const int MAZE_COLS = 7;
+#define MAZE_ROWS 7
+#define MAZE_COLS 7
 
 void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
 {
