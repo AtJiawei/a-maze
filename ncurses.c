@@ -3,7 +3,7 @@
 #include <wchar.h>
 #include <assert.h>
 
-const char *PATH = "   "; // "🔘";
+const char *PATH = "  ";
 const char *GOAL = "🚩";
 const char *PLAYER = "🚶";
 const char *WALL = "🌲";
@@ -43,7 +43,7 @@ int main()
 
     // Initialize the screen buffer for ncurses.
     initscr();
-    keypad(stdscr, 1);
+    keypad(stdscr, 1); 
 
     noecho();    // do not show the user input
     curs_set(0); // hide blinking cursor
@@ -79,7 +79,7 @@ int main()
         if (c == KEY_RIGHT)
             x++;
     }
-
+    
     endwin();
 
     return 0;
