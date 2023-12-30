@@ -1,9 +1,6 @@
 .DS_Store
 
-/bazel-a-maze
-/bazel-bin
-/bazel-out
-/bazel-testlogs
+/bazel-*
 /MODULE.bazel
 /MODULE.bazel.lock
 
