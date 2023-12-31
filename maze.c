@@ -129,6 +129,7 @@ void play()
         int c = getch();
         if (c == ESC_KEY) // stop the game if player chooses to quit
         {
+            clear();
             mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
             break;
         }
@@ -156,7 +157,7 @@ int main()
     setlocale(LC_ALL, "");
 
     // Ensure that all characters we use to print the maze are indeed of printing width 2.
-    assert(wcwidth(U'🔘') == MAZE_COL_WIDTH);
+    assert(wcwidth(U'😃') == MAZE_COL_WIDTH);
     assert(wcwidth(U'🚩') == MAZE_COL_WIDTH);
     assert(wcwidth(U'🚶') == MAZE_COL_WIDTH);
     assert(wcwidth(U'🌲') == MAZE_COL_WIDTH);
