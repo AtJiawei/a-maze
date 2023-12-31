@@ -11,14 +11,15 @@ const char *PLAYER = "🚶";
 const char *WALL = "🌲";
 const char *VICTORY = "😃";
 
+#define ESC_KEY 27
 #define MAZE_COLS 7
 #define MAZE_ROWS 7
-
-#define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
-
-#define ESC_KEY 27
 #define MSG_COL 15
 #define MSG_ROW 11
+#define STP_COL 15
+#define STP_ROW 14
+
+#define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
 
 typedef struct
 {
@@ -106,6 +107,8 @@ void play()
         .y = 1,
     };
 
+    int counter = 0;
+
     while (1)
     {
         // Get the terminal window size
@@ -115,11 +118,12 @@ void play()
         // Calculate starting row and column for centering the maze
         int startRow = calculateStartRow(windowHeight);
         int startCol = calculateStartCol(windowWidth);
-        
+
         // Render.
         clear();
         printMaze(startRow, startCol, maze);
         printPlayer(startRow, startCol, player);
+        mvprintw(STP_COL, STP_COL, "Total Steps Taken: %i", counter);
 
         // Update state.
         int c = getch();
@@ -128,14 +132,17 @@ void play()
             mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
             break;
         }
-        updatePlayerPos(&player, c, maze);
+        else{
+            counter++;
+            updatePlayerPos(&player, c, maze);
+        }
 
         // Check for victory.
         if (reach_goal(player, maze) == true)
         {
             clear();
             mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, VICTORY);
-            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Press any key to close the window");
+            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. Press any key to close the window", counter);
             break;
         }
     }
