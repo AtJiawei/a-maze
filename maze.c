@@ -31,10 +31,10 @@ typedef struct
 
 bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    return maze[player.y][player.x] == GOAL;
+    return maze[player.y][player.x] == GOAL; // same as if true return true else return false; 
 }
 
-int updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
+bool updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
     Player new_player = *player;
 
@@ -54,16 +54,10 @@ int updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS
 
         if (reach_goal(*player, maze) == true)
         {
-            clear();
-            mvprintw(MAZE_START_ROW + player->y, MAZE_START_COL + player->x * MAZE_COL_WIDTH, VICTORY);
-            return 1; // Player reached goal
-        }
-        else
-        {
-            return 0; // Normal
+            return true; // Player reached goal
         }
     }
-    return 0;
+    return false;
 }
 
 void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
@@ -108,14 +102,11 @@ void play(const char *maze[MAZE_ROWS][MAZE_COLS])
         {
             if (updatePlayerPos(&player, c, maze))
             {
+                clear();
+                mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, VICTORY);
                 mvprintw(MSG_COL, MSG_ROW, "|| Congratulations! You have WON! Press any key to close the window");
                 break;
             }
-        }
-        else // Instruct player to use the arrow keys for directions
-        {
-            mvprintw(MSG_COL, MSG_ROW, "|| Invalid key entered. Please press any key to continue the game, or press Esc for 2 times to quit");
-            getch();
         }
     }
 }
