@@ -106,16 +106,16 @@ void play()
         .y = 1,
     };
 
-    // Get the terminal window size
-    int windowHeight, windowWidth;
-    getmaxyx(stdscr, windowHeight, windowWidth);
-
-    // Calculate starting row and column for centering the maze
-    int startRow = calculateStartRow(windowHeight);
-    int startCol = calculateStartCol(windowWidth);
-
     while (1)
     {
+        // Get the terminal window size
+        int windowHeight, windowWidth;
+        getmaxyx(stdscr, windowHeight, windowWidth);
+
+        // Calculate starting row and column for centering the maze
+        int startRow = calculateStartRow(windowHeight);
+        int startCol = calculateStartCol(windowWidth);
+        
         // Render.
         clear();
         printMaze(startRow, startCol, maze);
