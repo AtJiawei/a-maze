@@ -29,17 +29,9 @@ typedef struct
     int y;
 } Player;
 
-bool reach_goal(Player *player, Player new_player, const char *maze[MAZE_ROWS][MAZE_COLS] )
+bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    if(maze[new_player.y][new_player.x] == GOAL)
-        {
-            player->x = new_player.x;
-            player->y = new_player.y;
-            clear();
-            mvprintw(MAZE_START_ROW + player->y, MAZE_START_COL + player->x * MAZE_COL_WIDTH, VICTORY);
-            return true; // Player reached goal
-        }
-    return false;
+    return maze[player.y][player.x] == GOAL;
 }
 
 int updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
@@ -58,13 +50,16 @@ int updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS
 
     if (new_player.x >= 0 && new_player.x < MAZE_ROWS && new_player.y >= 0 && new_player.y < MAZE_COLS && maze[new_player.y][new_player.x] != WALL)
     {
-        if (reach_goal(&player, new_player, maze) == true)
+        *player = new_player;
+
+        if (reach_goal(*player, maze) == true)
         {
+            clear();
+            mvprintw(MAZE_START_ROW + player->y, MAZE_START_COL + player->x * MAZE_COL_WIDTH, VICTORY);
             return 1; // Player reached goal
         }
         else
         {
-            *player = new_player;
             return 0; // Normal
         }
     }
