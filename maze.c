@@ -31,7 +31,7 @@ typedef struct
 
 bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    return maze[player.y][player.x] == GOAL; // same as if true return true else return false; 
+    return maze[player.y][player.x] == GOAL; // same as if true return true else return false;
 }
 
 bool updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
@@ -76,8 +76,17 @@ void printPlayer(Player player)
     mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
-void play(const char *maze[MAZE_ROWS][MAZE_COLS])
+void play()
 {
+    const char *maze[MAZE_ROWS][MAZE_COLS] = {
+        {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
+        {WALL, START, PATH, WALL, PATH, WALL, WALL},
+        {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
+        {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
+        {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
+        {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
+        {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
+
     // Player position.
     Player player = {
         .x = 1,
@@ -95,20 +104,20 @@ void play(const char *maze[MAZE_ROWS][MAZE_COLS])
 
         if (c == ESC_KEY) // stop the game if player chooses to quit
         {
-            mvprintw(MSG_COL, MSG_ROW, "|| Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
+            mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
             break;
         }
-        else if (c == KEY_UP || c == KEY_DOWN || c == KEY_LEFT || c == KEY_RIGHT)
+
+        if (updatePlayerPos(&player, c, maze))
         {
-            if (updatePlayerPos(&player, c, maze))
-            {
-                clear();
-                mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, VICTORY);
-                mvprintw(MSG_COL, MSG_ROW, "|| Congratulations! You have WON! Press any key to close the window");
-                break;
-            }
+            clear();
+            mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, VICTORY);
+            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Press any key to close the window");
+            break;
         }
     }
+
+    getch();
 }
 
 int main()
@@ -130,22 +139,12 @@ int main()
         return 1;
     }
     keypad(stdscr, 1);
-
     noecho();    // do not show the user input
     curs_set(0); // hide blinking cursor
 
-    const char *maze[MAZE_ROWS][MAZE_COLS] =
-        {
-            {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
-            {WALL, START, PATH, WALL, PATH, WALL, WALL},
-            {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
-            {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
-            {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
-            {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
-            {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
-    play(maze);
-    refresh();
-    getch();
+    play();
+
     endwin();
+
     return 0;
 }
