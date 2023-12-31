@@ -34,30 +34,36 @@ bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
     return maze[player.y][player.x] == GOAL; // same as if true return true else return false;
 }
 
-bool updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
+int max(int a, int b)
 {
-    Player new_player = *player;
+    return a > b ? a : b;
+}
 
-    // Process input.
-    if (c == KEY_UP)
-        new_player.y--;
-    if (c == KEY_DOWN)
-        new_player.y++;
-    if (c == KEY_LEFT)
-        new_player.x--;
-    if (c == KEY_RIGHT)
-        new_player.x++;
+int min(int a, int b)
+{
+    return a < b ? a : b;
+}
 
-    if (new_player.x >= 0 && new_player.x < MAZE_ROWS && new_player.y >= 0 && new_player.y < MAZE_COLS && maze[new_player.y][new_player.x] != WALL)
+// Returns min if value < min, max if value > max, and otherwise the value itself.
+int clamp(int value, int min_, int max_)
+{
+    return min(max(value, min_), max_);
+}
+
+void updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
+{
+    int dx = (c == KEY_LEFT ? -1 : 0) + (c == KEY_RIGHT ? 1 : 0); // dx = delta x, the changing x
+    int dy = (c == KEY_UP ? -1 : 0) + (c == KEY_DOWN ? 1 : 0);
+
+    // check if the new x/y is within the grid and return the clamp value
+    int x = clamp(player->x + dx, 0, MAZE_COLS - 1); // between (): x + the change of x
+    int y = clamp(player->y + dy, 0, MAZE_ROWS - 1); // between (): y + the change of y
+
+    if (maze[y][x] != WALL)
     {
-        *player = new_player;
-
-        if (reach_goal(*player, maze) == true)
-        {
-            return true; // Player reached goal
-        }
+        player->x = x;
+        player->y = y;
     }
-    return false;
 }
 
 void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
@@ -93,22 +99,24 @@ void play()
         .y = 1,
     };
 
-    int c;
     while (1)
     {
+        // Render.
         clear();
         printMaze(maze);
         printPlayer(player);
 
-        c = getch();
-
+        // Update state.
+        int c = getch();
         if (c == ESC_KEY) // stop the game if player chooses to quit
         {
             mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
             break;
         }
+        updatePlayerPos(&player, c, maze);
 
-        if (updatePlayerPos(&player, c, maze))
+        // Check for victory.
+        if (reach_goal(player, maze) == true)
         {
             clear();
             mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, VICTORY);
