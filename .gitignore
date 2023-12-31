@@ -5,10 +5,5 @@
 /MODULE.bazel.lock
 
 /maze
-/maze01
-/maze02
-/maze03
-/maze04
-/maze05
 /ncurses
 /test
