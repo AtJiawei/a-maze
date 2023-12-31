@@ -1,4 +1,3 @@
-// this version is to add ncurses.h library. reordered the headers. reordered the global variables
 #include <assert.h>
 #include <locale.h>
 #include <ncurses.h>
@@ -12,22 +11,30 @@ const char *PLAYER = "🚶";
 const char *WALL = "🌲";
 const char *VICTORY = "😃";
 
-#define MAZE_ROWS 7
 #define MAZE_COLS 7
+#define MAZE_ROWS 7
 
-#define MAZE_START_ROW 4
-#define MAZE_START_COL 3
 #define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
 
+#define ESC_KEY 27
 #define MSG_COL 15
 #define MSG_ROW 11
-#define ESC_KEY 27
 
 typedef struct
 {
     int x;
     int y;
 } Player;
+
+int calculateStartRow(int windowHeight)
+{
+    return (windowHeight - MAZE_ROWS) / 2;
+}
+
+int calculateStartCol(int windowWidth)
+{
+    return (windowWidth - MAZE_COLS * MAZE_COL_WIDTH) / 2;
+}
 
 bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
@@ -66,20 +73,20 @@ void updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COL
     }
 }
 
-void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
+void printMaze(int startRow, int startCol, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
     for (int i = 0; i < MAZE_ROWS; i++)
     {
         for (int j = 0; j < MAZE_COLS; j++)
         {
-            mvaddstr(MAZE_START_ROW + i, MAZE_START_COL + j * MAZE_COL_WIDTH, maze[i][j]);
+            mvaddstr(startRow + i, startCol + j * MAZE_COL_WIDTH, maze[i][j]);
         }
     }
 }
 
-void printPlayer(Player player)
+void printPlayer(int startRow, int startCol, Player player)
 {
-    mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, PLAYER);
+    mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
 void play()
@@ -99,12 +106,20 @@ void play()
         .y = 1,
     };
 
+    // Get the terminal window size
+    int windowHeight, windowWidth;
+    getmaxyx(stdscr, windowHeight, windowWidth);
+
+    // Calculate starting row and column for centering the maze
+    int startRow = calculateStartRow(windowHeight);
+    int startCol = calculateStartCol(windowWidth);
+
     while (1)
     {
         // Render.
         clear();
-        printMaze(maze);
-        printPlayer(player);
+        printMaze(startRow, startCol, maze);
+        printPlayer(startRow, startCol, player);
 
         // Update state.
         int c = getch();
@@ -119,7 +134,7 @@ void play()
         if (reach_goal(player, maze) == true)
         {
             clear();
-            mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, VICTORY);
+            mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, VICTORY);
             mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Press any key to close the window");
             break;
         }
