@@ -1,20 +1,20 @@
-//1st working version as backup
+// 1st working version as backup
 #include <stdio.h>
-//define the global variables
-const int ROWS = 5;
-const int COLS = 5;
-const char PATH = '-';
-const char GOAL = '!';
-const char PLAYER = 'V';
-const char WALL = '#';
+// define the global variables
+#define MAZE_ROWS 7
+#define MAZE_COLS 7
+#define PATH '-'
+#define GOAL '!'
+#define PLAYER 'V'
+#define WALL '#'
 
-int updateMaze(char Move, char maze[ROWS][COLS]) 
+int updateMaze(char Move, char maze[MAZE_ROWS][MAZE_COLS])
 {
     // check the location of the player(V)
     int x, y;
-    for (int m = 0; m < ROWS; m++)
+    for (int m = 0; m < MAZE_ROWS; m++)
     {
-        for (int n = 0; n < COLS; n++)
+        for (int n = 0; n < MAZE_COLS; n++)
         {
             if (maze[m][n] == PLAYER)
             {
@@ -26,9 +26,9 @@ int updateMaze(char Move, char maze[ROWS][COLS])
     }
 
 outer:
-    if (Move == 'd' && y != COLS - 1 && maze[x][y + 1] != WALL)
+    if (Move == 'd' && y != MAZE_COLS - 1 && maze[x][y + 1] != WALL)
     {
-        if(maze[x][y + 1] == GOAL)
+        if (maze[x][y + 1] == GOAL)
         {
             maze[x][y] = PATH;
             maze[x][y + 1] = PLAYER;
@@ -42,9 +42,9 @@ outer:
         }
     }
 
-    if (Move == 's' && x != ROWS - 1 && maze[x + 1][y] != WALL)
+    if (Move == 's' && x != MAZE_ROWS - 1 && maze[x + 1][y] != WALL)
     {
-        if(maze[x + 1][y] == GOAL)
+        if (maze[x + 1][y] == GOAL)
         {
             maze[x][y] = PATH;
             maze[x + 1][y] = PLAYER;
@@ -60,7 +60,7 @@ outer:
 
     if (Move == 'a' && y != 0 && maze[x][y - 1] != WALL)
     {
-        if(maze[x][y - 1] == GOAL)
+        if (maze[x][y - 1] == GOAL)
         {
             maze[x][y] = PATH;
             maze[x][y - 1] = PLAYER;
@@ -76,7 +76,7 @@ outer:
 
     if (Move == 'w' && x != 0 && maze[x - 1][y] != WALL)
     {
-        if(maze[x - 1][y]== GOAL)
+        if (maze[x - 1][y] == GOAL)
         {
             maze[x][y] = PATH;
             maze[x - 1][y] = PLAYER;
@@ -93,12 +93,12 @@ outer:
 }
 
 // Function to print the maze
-void printMaze(char maze[ROWS][COLS])
+void printMaze(char maze[MAZE_ROWS][MAZE_COLS])
 {
     printf("\n");
-    for (int i = 0; i < ROWS; i++)
+    for (int i = 0; i < MAZE_ROWS; i++)
     {
-        for (int j = 0; j < COLS; j++)
+        for (int j = 0; j < MAZE_COLS; j++)
         {
             printf("%c ", maze[i][j]);
         }
@@ -106,29 +106,29 @@ void printMaze(char maze[ROWS][COLS])
     }
 }
 
-void play(char maze[ROWS][COLS])
+void play(char maze[MAZE_ROWS][MAZE_COLS])
 {
     char Move;
     while (1)
     {
         printf("\n____ Enter w/s/a/d to control the avatar, enter q to exit the game (please only use lower case): ");
         scanf(" %c", &Move);
-        
+
         if (Move == 'q')
         {
             printf("\n|| Game Ended.\n\n|| You have chosen to quit the game by pressing q.\n\n");
             break; // end the loop if 'q' is pressed
         }
-        else if (Move == 'w'|| Move == 's'|| Move == 'a'|| Move == 'd')
+        else if (Move == 'w' || Move == 's' || Move == 'a' || Move == 'd')
         {
-            if(updateMaze(Move, maze))
+            if (updateMaze(Move, maze))
             {
                 printMaze(maze);
                 printf("\n|| Congratulations! \n\n|| You have WON!\n\n");
-                break;            
+                break;
             }
-            printMaze(maze); 
-        }       
+            printMaze(maze);
+        }
         else
         {
             printf("Invalid key entered.\n");
@@ -139,14 +139,13 @@ void play(char maze[ROWS][COLS])
 int main()
 {
     // Initialize the maze
-    char maze[ROWS][COLS] =
+    char maze[MAZE_ROWS][MAZE_COLS] =
         {
             {PLAYER, PATH, WALL, PATH, WALL},
             {WALL, PATH, WALL, PATH, PATH},
             {PATH, PATH, PATH, PATH, WALL},
             {PATH, WALL, WALL, PATH, PATH},
-            {PATH, PATH, WALL, WALL, GOAL}
-        };
+            {PATH, PATH, WALL, WALL, GOAL}};
 
     // Print the maze
     printMaze(maze);

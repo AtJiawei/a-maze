@@ -1,13 +1,13 @@
 // this version is the best version so far. the Move function simplied the movement check.
 #include <stdio.h>
 //define the global variables
-const char PATH = '-';
-const char GOAL = '!';
-const char PLAYER = 'V';
-const char WALL = '#';
+#define PATH '-'
+#define GOAL '!'
+#define PLAYER 'V'
+#define WALL '#'
 
-const int MAZE_ROWS = 7;
-const int MAZE_COLS = 7;
+#define MAZE_ROWS 7
+#define MAZE_COLS 7
 
 typedef struct 
 {

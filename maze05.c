@@ -1,76 +1,62 @@
-// this version is to add ncurses.h library 
-#include <stdio.h>
+// this version is to add ncurses.h library. reordered the headers. reordered the global variables
+#include <assert.h>
+#include <locale.h>
 #include <ncurses.h>
+#include <wchar.h>
 
 // define the global variables
-const char *PATH = "🌿";
 const char *GOAL = "🚩";
+const char *START = "📌";
+const char *PATH = "  ";
 const char *PLAYER = "🚶";
-const char *WALL = "🧱";
+const char *WALL = "🌲";
+const char *VICTORY = "😃";
 
-const int MAZE_ROWS = 7;
-const int MAZE_COLS = 7;
+#define MAZE_ROWS 7
+#define MAZE_COLS 7
+
+#define MAZE_START_ROW 4
+#define MAZE_START_COL 3
+#define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
+
+#define MSG_COL 15
+#define MSG_ROW 11
+#define ESC_KEY 27
 
 typedef struct
 {
     int x;
     int y;
-} Position;
+} Player;
 
-Position findPlayer(const char *maze[MAZE_ROWS][MAZE_COLS])
+int updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    Position playerPosition = {0, 0};
-    for (int i = 0; i < MAZE_ROWS; i++)
+    Player new_player = *player;
+
+    // Process input.
+    if (c == KEY_UP)
+        new_player.y--;
+    if (c == KEY_DOWN)
+        new_player.y++;
+    if (c == KEY_LEFT)
+        new_player.x--;
+    if (c == KEY_RIGHT)
+        new_player.x++;
+
+    if (new_player.x >= 0 && new_player.x < MAZE_ROWS && new_player.y >= 0 && new_player.y < MAZE_COLS && maze[new_player.y][new_player.x] != WALL)
     {
-        for (int j = 0; j < MAZE_COLS; j++)
+        if (maze[new_player.y][new_player.x] == GOAL)
         {
-            if (maze[i][j] == PLAYER)
-            {
-                playerPosition.x = i;
-                playerPosition.y = j;
-                return playerPosition;
-            }
-        }
-    }
-    return playerPosition;
-}
-
-int updateMaze(char Move, const char *maze[MAZE_ROWS][MAZE_COLS])
-{
-    Position playerPosition = findPlayer(maze);
-    int newX = playerPosition.x;
-    int newY = playerPosition.y;
-
-    if (Move == 'w')
-    {
-        newX--;
-    }
-    if (Move == 's')
-    {
-        newX++;
-    }
-    if (Move == 'a')
-    {
-        newY--;
-    }
-    if (Move == 'd')
-    {
-        newY++;
-    }
-
-    if (newX >= 0 && newX < MAZE_ROWS && newY >= 0 && newY < MAZE_COLS && maze[newX][newY] != WALL)
-    {
-        if (maze[newX][newY] == GOAL)
-        {
-            maze[playerPosition.x][playerPosition.y] = PATH;
-            maze[newX][newY] = PLAYER;
+            player->x = new_player.x;
+            player->y = new_player.y;
+            clear();
+            mvprintw(MAZE_START_ROW + player->y, MAZE_START_COL + player->x * MAZE_COL_WIDTH, VICTORY);
             return 1; // Player reached goal
         }
         else
         {
-            maze[playerPosition.x][playerPosition.y] = PATH;
-            maze[newX][newY] = PLAYER;
-            return 0; // Normal move
+            *player = new_player;
+            return 0; // Normal
         }
     }
     return 0;
@@ -78,43 +64,54 @@ int updateMaze(char Move, const char *maze[MAZE_ROWS][MAZE_COLS])
 
 void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    printf("\n");
     for (int i = 0; i < MAZE_ROWS; i++)
     {
         for (int j = 0; j < MAZE_COLS; j++)
         {
-            printf("%s ", maze[i][j]);
+            mvaddstr(MAZE_START_ROW + i, MAZE_START_COL + j * MAZE_COL_WIDTH, maze[i][j]);
         }
-        printf("\n");
     }
+}
+
+void printPlayer(Player player)
+{
+    mvprintw(MAZE_START_ROW + player.y, MAZE_START_COL + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
 void play(const char *maze[MAZE_ROWS][MAZE_COLS])
 {
-    char Move;
+    // Player position.
+    Player player = {
+        .x = 1,
+        .y = 1,
+    };
+
+    int c;
     while (1)
     {
-        printf("\n____ Enter w/s/a/d to control the avatar, enter q to exit the game (please only use lower case): ");
-        scanf(" %c", &Move);
+        clear();
+        printMaze(maze);
+        printPlayer(player);
 
-        if (Move == 'q')
+        c = getch();
+
+        if (c == ESC_KEY) // stop the game if player chooses to quit
         {
-            printf("\n|| Game Ended.\n\n|| You have chosen to quit the game by pressing q.\n\n");
-            break; // end the loop if 'q' is pressed
+            mvprintw(MSG_COL, MSG_ROW, "|| Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
+            break;
         }
-        else if (Move == 'w' || Move == 's' || Move == 'a' || Move == 'd')
+        else if (c == KEY_UP || c == KEY_DOWN || c == KEY_LEFT || c == KEY_RIGHT)
         {
-            if (updateMaze(Move, maze))
+            if (updatePlayerPos(&player, c, maze))
             {
-                printMaze(maze);
-                printf("\n|| Congratulations! \n\n|| You have WON!\n\n");
+                mvprintw(MSG_COL, MSG_ROW, "|| Congratulations! You have WON! Press any key to close the window");
                 break;
             }
-            printMaze(maze);
         }
-        else
+        else // Instruct player to use the arrow keys for directions
         {
-            printf("Invalid key entered.\n");
+            mvprintw(MSG_COL, MSG_ROW, "|| Invalid key entered. Please press any key to continue the game, or press Esc for 2 times to quit");
+            getch();
         }
     }
 }
@@ -122,18 +119,38 @@ void play(const char *maze[MAZE_ROWS][MAZE_COLS])
 int main()
 {
     // Initialize the maze
+    setlocale(LC_ALL, "");
+
+    // Ensure that all characters we use to print the maze are indeed of printing width 2.
+    assert(wcwidth(U'🔘') == MAZE_COL_WIDTH);
+    assert(wcwidth(U'🚩') == MAZE_COL_WIDTH);
+    assert(wcwidth(U'🚶') == MAZE_COL_WIDTH);
+    assert(wcwidth(U'🌲') == MAZE_COL_WIDTH);
+    assert(wcwidth(U'📌') == MAZE_COL_WIDTH);
+
+    // Initialize the screen buffer for ncurses.
+    if (initscr() == NULL)
+    {
+        fprintf(stderr, "Error initializing ncurses.\n");
+        return 1;
+    }
+    keypad(stdscr, 1);
+
+    noecho();    // do not show the user input
+    curs_set(0); // hide blinking cursor
+
     const char *maze[MAZE_ROWS][MAZE_COLS] =
         {
             {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
-            {WALL, PLAYER, PATH, WALL, PATH, WALL, WALL},
+            {WALL, START, PATH, WALL, PATH, WALL, WALL},
             {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
             {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
             {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
             {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
             {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
-
-    // Print the maze
-    printMaze(maze);
     play(maze);
+    refresh();
+    getch();
+    endwin();
     return 0;
 }

@@ -7,8 +7,8 @@ const char *GOAL = "🚩";
 const char *PLAYER = "🚶";
 const char *WALL = "🧱";
 
-const int MAZE_ROWS = 7;
-const int MAZE_COLS = 7;
+#define MAZE_ROWS 7
+#define MAZE_COLS 7
 
 typedef struct
 {
