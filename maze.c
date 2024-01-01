@@ -142,6 +142,7 @@ void play()
     // Second skippable delay (by pressing a character).
     timeout(4000);
     getch();
+    timeout(-1);
 }
 
 int main()
