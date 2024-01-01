@@ -5,12 +5,8 @@
 #include "lib.h"
 
 // define the global variables
-const char *GOAL = "🚩";
-const char *START = "📌";
-const char *PATH = "  ";
-const char *PLAYER = "🚶";
-const char *WALL = "🌲";
-const char *VICTORY = "😃";
+const char * PLAYER = "🚶";
+const char * VICTORY = "😃";
 
 #define ESC_KEY 27
 #define MAZE_COLS 7
@@ -22,7 +18,27 @@ const char *VICTORY = "😃";
 
 #define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
 
-typedef struct
+// A maze is defined as a grid of cells.
+typedef enum Cell {
+    Cell_Path = 0,
+    Cell_Wall = 1,
+    Cell_Start = 2,
+    Cell_Goal = 3,
+} Cell;
+
+const char * cell_to_str(Cell cell)
+{
+    switch (cell)
+    {
+        case Cell_Path: return "  ";
+        case Cell_Wall: return "🌲";
+        case Cell_Start: return "📌";
+        case Cell_Goal: return "🚩";
+        default: assert(false);
+    }
+}
+
+typedef struct Player
 {
     int x;
     int y;
@@ -38,12 +54,12 @@ int calculateStartCol(int windowWidth)
     return (windowWidth - MAZE_COLS * MAZE_COL_WIDTH) / 2;
 }
 
-bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
+bool reach_goal(Player player, Cell maze[MAZE_ROWS][MAZE_COLS])
 {
-    return maze[player.y][player.x] == GOAL; // same as if true return true else return false;
+    return maze[player.y][player.x] == Cell_Goal;
 }
 
-void updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
+void updatePlayerPos(Player *player, int c, Cell maze[MAZE_ROWS][MAZE_COLS])
 {
     int dx = (c == KEY_LEFT ? -1 : 0) + (c == KEY_RIGHT ? 1 : 0); // dx = delta x, the changing x
     int dy = (c == KEY_UP ? -1 : 0) + (c == KEY_DOWN ? 1 : 0);
@@ -52,39 +68,40 @@ void updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COL
     int x = clamp(player->x + dx, 0, MAZE_COLS - 1); // between (): x + the change of x
     int y = clamp(player->y + dy, 0, MAZE_ROWS - 1); // between (): y + the change of y
 
-    if (maze[y][x] != WALL)
+    if (maze[y][x] != Cell_Wall)
     {
         player->x = x;
         player->y = y;
     }
 }
 
-void printMaze(int startRow, int startCol, const char *maze[MAZE_ROWS][MAZE_COLS])
+void printMaze(int startRow, int startCol, Cell maze[MAZE_ROWS][MAZE_COLS])
 {
     for (int i = 0; i < MAZE_ROWS; i++)
     {
         for (int j = 0; j < MAZE_COLS; j++)
         {
-            mvaddstr(startRow + i, startCol + j * MAZE_COL_WIDTH, maze[i][j]);
+            const char * str = cell_to_str(maze[i][j]);
+            mvaddstr(startRow + i, startCol + j * MAZE_COL_WIDTH, str);
         }
     }
 }
 
 void printPlayer(int startRow, int startCol, Player player)
 {
-    mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, PLAYER);
+    mvaddstr(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
 void play()
 {
-    const char *maze[MAZE_ROWS][MAZE_COLS] = {
-        {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
-        {WALL, START, PATH, WALL, PATH, WALL, WALL},
-        {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
-        {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
-        {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
-        {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
-        {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
+    Cell maze[MAZE_ROWS][MAZE_COLS] = {
+        {Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall},
+        {Cell_Wall, Cell_Start, Cell_Path, Cell_Wall, Cell_Path, Cell_Wall, Cell_Wall},
+        {Cell_Wall, Cell_Wall, Cell_Path, Cell_Wall, Cell_Path, Cell_Path, Cell_Wall},
+        {Cell_Wall, Cell_Path, Cell_Path, Cell_Path, Cell_Path, Cell_Wall, Cell_Wall},
+        {Cell_Wall, Cell_Path, Cell_Wall, Cell_Wall, Cell_Path, Cell_Path, Cell_Wall},
+        {Cell_Wall, Cell_Path, Cell_Path, Cell_Wall, Cell_Wall, Cell_Path, Cell_Wall},
+        {Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall, Cell_Wall, Cell_Goal, Cell_Wall}};
 
     // Player position.
     Player player = {
@@ -128,7 +145,7 @@ void play()
         if (reach_goal(player, maze) == true)
         {
             clear();
-            mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, VICTORY);
+            mvaddstr(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, VICTORY);
             mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. This window will be closed automatically in 5 seconds. To quit immediately,press any key to close the window.", counter);
             break;
         }
