@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>
 #include <locale.h>
 #include <ncurses.h>
 #include <wchar.h>
@@ -17,6 +18,11 @@ const char *VICTORY = "😃";
 #define STP_ROW 14
 
 #define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
+
+typedef struct Vector2 {
+    int x;
+    int y;
+} Vector2;
 
 // A maze is defined as a grid of cells.
 typedef enum Cell
@@ -60,12 +66,12 @@ int calc_start_col(int win_cols)
     return (win_cols - MAZE_COLS * MAZE_COL_WIDTH) / 2;
 }
 
-bool reach_goal(Player player, Cell maze[MAZE_ROWS][MAZE_COLS])
+bool reach_goal(Player player, Cell * maze, Vector2 dims)
 {
-    return maze[player.y][player.x] == CELL_GOAL;
+    return maze[player.y * dims.x + player.x] == CELL_GOAL;
 }
 
-void update_player_pos(Player *player, int c, Cell maze[MAZE_ROWS][MAZE_COLS])
+void update_player_pos(Player *player, int c, Cell * maze, Vector2 dims)
 {
     int dx = (c == KEY_LEFT ? -1 : 0) + (c == KEY_RIGHT ? 1 : 0); // dx = delta x, the changing x
     int dy = (c == KEY_UP ? -1 : 0) + (c == KEY_DOWN ? 1 : 0);
@@ -74,20 +80,20 @@ void update_player_pos(Player *player, int c, Cell maze[MAZE_ROWS][MAZE_COLS])
     int x = clamp(player->x + dx, 0, MAZE_COLS - 1); // between (): x + the change of x
     int y = clamp(player->y + dy, 0, MAZE_ROWS - 1); // between (): y + the change of y
 
-    if (maze[y][x] != CELL_WALL)
+    if (maze[y * dims.x + x] != CELL_WALL)
     {
         player->x = x;
         player->y = y;
     }
 }
 
-void print_maze(int start_row, int start_col, Cell maze[MAZE_ROWS][MAZE_COLS])
+void print_maze(int start_row, int start_col, Cell * maze, Vector2 dims)
 {
     for (int i = 0; i < MAZE_ROWS; i++)
     {
         for (int j = 0; j < MAZE_COLS; j++)
         {
-            const char *str = cell_to_str(maze[i][j]);
+            const char *str = cell_to_str(maze[i * dims.x + j]);
             mvaddstr(start_row + i, start_col + j * MAZE_COL_WIDTH, str);
         }
     }
@@ -98,16 +104,50 @@ void print_player(int start_row, int start_col, Player player)
     mvaddstr(start_row + player.y, start_col + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
+// Cell
+
+Cell * alloc_maze(Vector2 dims)
+{
+    return malloc(sizeof(Cell) * dims.x * dims.y);
+}
+
+Cell * generate_maze(Vector2 dims)
+{
+    assert(dims.x > 1);
+    assert(dims.y > 1);
+
+    Cell * cells = alloc_maze(dims);
+    
+    for (int y = 0; y < dims.y; y++) {
+        for (int x = 0; x < dims.x; x++) {
+            Cell cell = (y == 0 || y == dims.y - 1 || x == 0 || x == dims.x - 1) ? CELL_WALL : CELL_PATH;
+            cells[y * dims.x + x] = cell;
+        }
+    }
+    
+    cells[1 * dims.x + 1] = CELL_START;
+    cells[(dims.y - 2) * dims.x + (dims.x - 2)] = CELL_GOAL;
+
+    return cells;
+}
+
 void play()
 {
-    Cell maze[MAZE_ROWS][MAZE_COLS] = {
-        {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL},
-        {CELL_WALL, CELL_START, CELL_PATH, CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL},
-        {CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
-        {CELL_WALL, CELL_PATH, CELL_PATH, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL},
-        {CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
-        {CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL},
-        {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_GOAL, CELL_WALL}};
+    Vector2 dims = {
+        .x = MAZE_COLS,
+        .y = MAZE_ROWS,
+    };
+
+    Cell * maze = generate_maze(dims);
+
+        // {
+        // {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL},
+        // {CELL_WALL, CELL_START, CELL_PATH, CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL},
+        // {CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
+        // {CELL_WALL, CELL_PATH, CELL_PATH, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL},
+        // {CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
+        // {CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL},
+        // {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_GOAL, CELL_WALL}};
 
     // Player position.
     Player player = {
@@ -129,7 +169,7 @@ void play()
 
         // Render.
         clear();
-        print_maze(start_row, start_col, maze);
+        print_maze(start_row, start_col, maze, dims);
         print_player(start_row, start_col, player);
         mvprintw(STP_COL, STP_COL, "Total Steps Taken: %i", counter);
 
@@ -144,11 +184,11 @@ void play()
         else
         {
             counter++;
-            update_player_pos(&player, c, maze);
+            update_player_pos(&player, c, maze, dims);
         }
 
         // Check for victory.
-        if (reach_goal(player, maze) == true)
+        if (reach_goal(player, maze, dims) == true)
         {
             clear();
             mvaddstr(start_row + player.y, start_col + player.x * MAZE_COL_WIDTH, VICTORY);
