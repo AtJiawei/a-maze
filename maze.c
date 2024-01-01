@@ -10,8 +10,6 @@ const char *PLAYER = "🚶";
 const char *VICTORY = "😃";
 
 #define ESC_KEY 27
-#define MAZE_COLS 7
-#define MAZE_ROWS 7
 #define MSG_COL 15
 #define MSG_ROW 11
 #define STP_COL 15
@@ -19,7 +17,8 @@ const char *VICTORY = "😃";
 
 #define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
 
-typedef struct Vector2 {
+typedef struct Vector2
+{
     int x;
     int y;
 } Vector2;
@@ -32,6 +31,12 @@ typedef enum Cell
     CELL_START = 2,
     CELL_GOAL = 3,
 } Cell;
+
+typedef struct Maze
+{
+    Cell *cells;
+    Vector2 dims;
+} Maze;
 
 const char *cell_to_str(Cell cell)
 {
@@ -56,98 +61,93 @@ typedef struct Player
     int y;
 } Player;
 
-int calc_start_row(int win_rows)
+Vector2 calc_start(Vector2 win_dims, Vector2 maze_dims)
 {
-    return (win_rows - MAZE_ROWS) / 2;
+    Vector2 offset = {
+        .x = (win_dims.x - maze_dims.x * MAZE_COL_WIDTH) / 2,
+        .y = (win_dims.y - maze_dims.y) / 2,
+    };
+    return offset;
 }
 
-int calc_start_col(int win_cols)
+bool reach_goal(Player player, Maze maze)
 {
-    return (win_cols - MAZE_COLS * MAZE_COL_WIDTH) / 2;
+    return maze.cells[player.y * maze.dims.x + player.x] == CELL_GOAL;
 }
 
-bool reach_goal(Player player, Cell * maze, Vector2 dims)
-{
-    return maze[player.y * dims.x + player.x] == CELL_GOAL;
-}
-
-void update_player_pos(Player *player, int c, Cell * maze, Vector2 dims)
+void update_player_pos(Player *player, int c, Maze maze)
 {
     int dx = (c == KEY_LEFT ? -1 : 0) + (c == KEY_RIGHT ? 1 : 0); // dx = delta x, the changing x
     int dy = (c == KEY_UP ? -1 : 0) + (c == KEY_DOWN ? 1 : 0);
 
     // check if the new x/y is within the grid and return the clamp value
-    int x = clamp(player->x + dx, 0, MAZE_COLS - 1); // between (): x + the change of x
-    int y = clamp(player->y + dy, 0, MAZE_ROWS - 1); // between (): y + the change of y
+    int x = clamp(player->x + dx, 0, maze.dims.x - 1); // between (): x + the change of x
+    int y = clamp(player->y + dy, 0, maze.dims.y - 1); // between (): y + the change of y
 
-    if (maze[y * dims.x + x] != CELL_WALL)
+    if (maze.cells[y * maze.dims.x + x] != CELL_WALL)
     {
         player->x = x;
         player->y = y;
     }
 }
 
-void print_maze(int start_row, int start_col, Cell * maze, Vector2 dims)
+void print_maze(Vector2 start, Maze maze)
 {
-    for (int i = 0; i < MAZE_ROWS; i++)
+    for (int y = 0; y < maze.dims.y; y++)
     {
-        for (int j = 0; j < MAZE_COLS; j++)
+        for (int x = 0; x < maze.dims.x; x++)
         {
-            const char *str = cell_to_str(maze[i * dims.x + j]);
-            mvaddstr(start_row + i, start_col + j * MAZE_COL_WIDTH, str);
+            const char *str = cell_to_str(maze.cells[y * maze.dims.x + x]);
+            mvaddstr(start.y + y, start.x + x * MAZE_COL_WIDTH, str);
         }
     }
 }
 
-void print_player(int start_row, int start_col, Player player)
+void print_player(Vector2 start, Player player)
 {
-    mvaddstr(start_row + player.y, start_col + player.x * MAZE_COL_WIDTH, PLAYER);
+    mvaddstr(start.y + player.y, start.x + player.x * MAZE_COL_WIDTH, PLAYER);
 }
 
 // Cell
 
-Cell * alloc_maze(Vector2 dims)
+Maze alloc_maze(Vector2 dims)
 {
-    return malloc(sizeof(Cell) * dims.x * dims.y);
+    Cell *cells = malloc(sizeof(Cell) * dims.x * dims.y);
+    Maze maze = {
+        .cells = cells,
+        .dims = dims,
+    };
+    return maze;
 }
 
-Cell * generate_maze(Vector2 dims)
+void fill_maze(Maze *maze)
 {
-    assert(dims.x > 1);
-    assert(dims.y > 1);
+    assert(maze->dims.x > 2);
+    assert(maze->dims.y > 2);
 
-    Cell * cells = alloc_maze(dims);
-    
-    for (int y = 0; y < dims.y; y++) {
-        for (int x = 0; x < dims.x; x++) {
-            Cell cell = (y == 0 || y == dims.y - 1 || x == 0 || x == dims.x - 1) ? CELL_WALL : CELL_PATH;
-            cells[y * dims.x + x] = cell;
+    for (int y = 0; y < maze->dims.y; y++)
+    {
+        for (int x = 0; x < maze->dims.x; x++)
+        {
+            Cell cell = (y == 0 || y == maze->dims.y - 1 || x == 0 || x == maze->dims.x - 1) ? CELL_WALL : CELL_PATH;
+            maze->cells[y * maze->dims.x + x] = cell;
         }
     }
-    
-    cells[1 * dims.x + 1] = CELL_START;
-    cells[(dims.y - 2) * dims.x + (dims.x - 2)] = CELL_GOAL;
 
-    return cells;
+    maze->cells[1 * maze->dims.x + 1] = CELL_START;
+    maze->cells[(maze->dims.y - 2) * maze->dims.x + (maze->dims.x - 2)] = CELL_GOAL;
 }
 
 void play()
 {
     Vector2 dims = {
-        .x = MAZE_COLS,
-        .y = MAZE_ROWS,
+        .x = 10,
+        .y = 6,
     };
 
-    Cell * maze = generate_maze(dims);
+    Maze maze = alloc_maze(dims);
 
-        // {
-        // {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL},
-        // {CELL_WALL, CELL_START, CELL_PATH, CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL},
-        // {CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
-        // {CELL_WALL, CELL_PATH, CELL_PATH, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL},
-        // {CELL_WALL, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL},
-        // {CELL_WALL, CELL_PATH, CELL_PATH, CELL_WALL, CELL_WALL, CELL_PATH, CELL_WALL},
-        // {CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_WALL, CELL_GOAL, CELL_WALL}};
+    fill_maze(&maze);
 
     // Player position.
     Player player = {
@@ -160,17 +160,16 @@ void play()
     while (1)
     {
         // Get the terminal window size
-        int win_rows, win_cols;
-        getmaxyx(stdscr, win_rows, win_cols);
+        Vector2 win_dims;
+        getmaxyx(stdscr, win_dims.y, win_dims.x);
 
         // Calculate starting row and column for centering the maze
-        int start_row = calc_start_row(win_rows);
-        int start_col = calc_start_col(win_cols);
+        Vector2 start = calc_start(win_dims, maze.dims);
 
         // Render.
         clear();
-        print_maze(start_row, start_col, maze, dims);
-        print_player(start_row, start_col, player);
+        print_maze(start, maze);
+        print_player(start, player);
         mvprintw(STP_COL, STP_COL, "Total Steps Taken: %i", counter);
 
         // Update state.
@@ -184,14 +183,14 @@ void play()
         else
         {
             counter++;
-            update_player_pos(&player, c, maze, dims);
+            update_player_pos(&player, c, maze);
         }
 
         // Check for victory.
-        if (reach_goal(player, maze, dims) == true)
+        if (reach_goal(player, maze) == true)
         {
             clear();
-            mvaddstr(start_row + player.y, start_col + player.x * MAZE_COL_WIDTH, VICTORY);
+            mvaddstr(start.y + player.y, start.x + player.x * MAZE_COL_WIDTH, VICTORY);
             mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. This window will be closed automatically in 5 seconds. To quit immediately,press any key to close the window.", counter);
             break;
         }
