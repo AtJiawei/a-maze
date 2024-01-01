@@ -115,7 +115,9 @@ void play()
         if (c == ESC_KEY) // stop the game if player chooses to quit
         {
             clear();
-            mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
+            mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. This window will be closed automatically in 5 seconds. To quit immediately, press any key to close the window ");
+            refresh();  // Ensure that the message is displayed before the delay
+            napms(5000); // Delay for 5000 milliseconds (5 seconds)
             break;
         }
         else
@@ -129,12 +131,12 @@ void play()
         {
             clear();
             mvprintw(startRow + player.y, startCol + player.x * MAZE_COL_WIDTH, VICTORY);
-            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. Press any key to close the window", counter);
+            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. This window will be closed automatically in 5 seconds. To quit immediately,press any key to close the window.", counter);
+            refresh();  // Ensure that the message is displayed before the delay
+            napms(5000); // Delay for 5000 milliseconds (5 seconds)
             break;
         }
     }
-
-    getch();
 }
 
 int main()
