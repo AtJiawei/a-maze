@@ -14,7 +14,7 @@ cc_binary(
 
 cc_binary(
     name = "maze",
-    srcs = ["maze.c"],
+    srcs = ["maze.c", "lib.c", "lib.h"],
     linkopts = select({
         "@platforms//os:osx": ["-lncurses"],
         "//conditions:default": ["-lncursesw"],

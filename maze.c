@@ -2,6 +2,7 @@
 #include <locale.h>
 #include <ncurses.h>
 #include <wchar.h>
+#include "lib.h"
 
 // define the global variables
 const char *GOAL = "🚩";
@@ -40,22 +41,6 @@ int calculateStartCol(int windowWidth)
 bool reach_goal(Player player, const char *maze[MAZE_ROWS][MAZE_COLS])
 {
     return maze[player.y][player.x] == GOAL; // same as if true return true else return false;
-}
-
-int max(int a, int b)
-{
-    return a > b ? a : b;
-}
-
-int min(int a, int b)
-{
-    return a < b ? a : b;
-}
-
-// Returns min if value < min, max if value > max, and otherwise the value itself.
-int clamp(int value, int min_, int max_)
-{
-    return min(max(value, min_), max_);
 }
 
 void updatePlayerPos(Player *player, int c, const char *maze[MAZE_ROWS][MAZE_COLS])
@@ -133,7 +118,8 @@ void play()
             mvprintw(MSG_COL, MSG_ROW, "Game Ended. You have chosen to quit the game by pressing Esc. Press any key to close the window ");
             break;
         }
-        else{
+        else
+        {
             counter++;
             updatePlayerPos(&player, c, maze);
         }
