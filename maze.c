@@ -15,8 +15,6 @@ const char *VICTORY = "😃";
 #define ESC_KEY 27
 #define MSG_COL 15
 #define MSG_ROW 11
-#define STP_COL 15
-#define STP_ROW 14
 
 #define MAZE_COL_WIDTH 2 // Width of each maze cell when printed
 
@@ -29,6 +27,11 @@ typedef struct Vector2
 Vector2 vector2(int x, int y)
 {
     return (Vector2){.x = x, .y = y};
+}
+
+Vector2 vector2_sub(Vector2 a, Vector2 b)
+{
+    return vector2(a.x - b.x, a.y - b.y);
 }
 
 bool vector2_eq(Vector2 a, Vector2 b)
@@ -169,15 +172,13 @@ int r2(int low, int high)
     return low + r1(high - low);
 }
 
-// Extends Cell
+// Remaps Cell
 typedef enum CellWilsons
 {
     CELL_WILSONS_PATH = CELL_PATH,
     CELL_WILSONS_WALL = CELL_WALL,
-    CELL_WILSONS_START = CELL_START,
-    CELL_WILSONS_GOAL = CELL_GOAL,
-    CELL_WILSONS_UNDEFINED = 'U',
-    CELL_WILSONS_RANDOM_WALK = 'R',
+    CELL_WILSONS_UNDEFINED = CELL_START,
+    CELL_WILSONS_RANDOM_WALK = CELL_GOAL,
 } CellWilsons;
 
 int sub_idx(Vector2 dims, Vector2 idx)
@@ -185,8 +186,105 @@ int sub_idx(Vector2 dims, Vector2 idx)
     return (idx.y * 2 + 1) * dims.x + (idx.x * 2 + 1);
 }
 
+void print_maze_wilsons(Maze *maze, Vector2 *path, int path_len)
+{
+    // Get the terminal window size
+    Vector2 win_dims;
+    getmaxyx(stdscr, win_dims.y, win_dims.x);
+
+    // Calculate starting row and column for centering the maze
+    Vector2 start = calc_start(win_dims, maze->dims);
+
+    for (int y = 0; y < maze->dims.y; y++)
+    {
+        for (int x = 0; x < maze->dims.x; x++)
+        {
+            const char *str;
+            switch (maze->cells[y * maze->dims.x + x])
+            {
+            case CELL_WILSONS_PATH:
+            case CELL_WILSONS_RANDOM_WALK:
+                str = "  ";
+                break;
+            case CELL_WILSONS_WALL:
+            case CELL_WILSONS_UNDEFINED:
+                str = "🌲";
+                break;
+            default:
+                assert(false);
+            }
+            mvaddstr(start.y + y, start.x + x * MAZE_COL_WIDTH, str);
+        }
+    }
+
+    if (path_len > 0)
+    {
+        Vector2 last = path[0];
+        mvaddstr(start.y + (last.y * 2 + 1), start.x + (last.x * 2 + 1) * MAZE_COL_WIDTH, "📌");
+
+        // Delete walls between random walk path.
+        for (int i = 1; i < path_len; i++)
+        {
+            Vector2 curr = path[i];
+            Vector2 d = vector2_sub(curr, last);
+            mvaddstr(start.y + (last.y * 2 + 1 + d.y), start.x + (last.x * 2 + 1 + d.x) * MAZE_COL_WIDTH, "  ");
+            last = curr;
+        }
+
+        if (path_len > 1)
+        {
+            mvaddstr(start.y + (last.y * 2 + 1), start.x + (last.x * 2 + 1) * MAZE_COL_WIDTH, "🚩");
+        }
+    }
+}
+
+int non_blocking_getch()
+{
+    timeout(0);
+    int c = getch();
+    timeout(-1);
+    return c;
+}
+
+void animate(bool *should_anim, int *anim_delay, int anim_mult, Maze *maze, Vector2 *path, int path_len)
+{
+    if (!*should_anim)
+        return;
+
+    clear();
+
+    mvprintw(0, 0, "Animating maze generation at %2.1f steps per second", 1000.0 / (float) *anim_delay);
+    mvaddstr(1, 0, "  Press q to skip animation");
+    mvaddstr(2, 0, "  Press ⬆️ to speed up animation");
+    mvaddstr(3, 0, "  Press ⬇️ to slow down animation");
+
+    print_maze_wilsons(maze, path, path_len);
+    refresh();
+    napms(*anim_delay * anim_mult);
+
+    int c;
+    while ((c = non_blocking_getch()) != ERR)
+    {
+        switch (c)
+        {
+        case 'q':
+            *should_anim = false;
+            break;
+        case KEY_UP:
+            *anim_delay = max(1, *anim_delay / 2);
+            break;
+        case KEY_DOWN:
+            *anim_delay = min(512, *anim_delay * 2);
+            break;
+        }
+    }
+}
+
 void generate_maze_wilsons(Maze *maze)
 {
+    bool should_anim = true;
+    int anim_delay = 128;
+
     Vector2 dims = maze->dims;
 
     assert(dims.x >= 3);
@@ -199,7 +297,8 @@ void generate_maze_wilsons(Maze *maze)
         .y = (dims.y - 1) / 2,
     };
 
-    CellWilsons *cells = maze->cells;
+    // Safety: CellWilsons should be a subset of Cell.
+    CellWilsons *cells = (CellWilsons *)maze->cells;
     Vector2 *path = malloc(sizeof(Vector2) * sub_dims.x * sub_dims.y);
 
     // Initialize the cells with the following pattern:
@@ -214,7 +313,7 @@ void generate_maze_wilsons(Maze *maze)
         }
     }
     // Mark one cell as part of the maze.
-    cells[1 * dims.x + 1] = CELL_WILSONS_PATH;
+    cells[sub_idx(dims, vector2(sub_dims.x/2, sub_dims.y/2))] = CELL_WILSONS_PATH;
 
     while (true)
     {
@@ -234,16 +333,6 @@ void generate_maze_wilsons(Maze *maze)
         {
             break;
         }
-
-        // mvprintw(0, 0, "Remaining: %i", count);
-        // for (int y = 0; y < dims.y; y++)
-        // {
-        //     for (int x = 0; x < dims.x; x++)
-        //     {
-        //         mvaddch(2 + y, x, '0' + cells[y * dims.x + x]);
-        //     }
-        // }
-        // getch();
 
         // Pick a starting point for the random walk.
         Vector2 head;
@@ -274,6 +363,7 @@ void generate_maze_wilsons(Maze *maze)
         cells[sub_idx(dims, head)] = CELL_WILSONS_RANDOM_WALK;
         path[0] = head;
         int path_len = 1;
+        animate(&should_anim, &anim_delay, 4, maze, path, path_len);
 
         while (true)
         {
@@ -316,16 +406,21 @@ void generate_maze_wilsons(Maze *maze)
 
             if (next_cell == CELL_WILSONS_PATH)
             {
+                // Animate the connection.
+                {
+                    path[path_len] = next;
+                    path_len += 1;
+                    animate(&should_anim, &anim_delay, 4, maze, path, path_len);
+                    path_len -= 1;
+                }
+
                 // Finish the path.
                 Vector2 last = next;
 
                 for (int path_idx = path_len - 1; path_idx >= 0; path_idx--)
                 {
                     Vector2 curr = path[path_idx];
-                    Vector2 d = {
-                        .x = curr.x - last.x,
-                        .y = curr.y - last.y,
-                    };
+                    Vector2 d = vector2_sub(curr, last);
                     cells[(last.y * 2 + 1 + d.y) * dims.x + (last.x * 2 + 1 + d.x)] = CELL_WILSONS_PATH;
                     cells[sub_idx(dims, curr)] = CELL_WILSONS_PATH;
                     last = curr;
@@ -334,20 +429,28 @@ void generate_maze_wilsons(Maze *maze)
             }
             else if (next_cell == CELL_WILSONS_RANDOM_WALK)
             {
-                // Erase loop.
-                int path_idx;
-                for (path_idx = path_len - 1; path_idx >= 0; path_idx--)
+                // Animate the self intersection.
                 {
-                    Vector2 curr = path[path_idx];
-                    if (vector2_eq(next, curr))
+                    path[path_len] = next;
+                    path_len += 1;
+                    animate(&should_anim, &anim_delay, 4, maze, path, path_len);
+                    path_len -= 1;
+                }
+
+                // Erase loop.
+                for (; path_len >= 1; path_len--)
+                {
+                    head = path[path_len - 1];
+                    if (vector2_eq(next, head))
                         break;
-                    cells[sub_idx(dims, curr)] = CELL_WILSONS_UNDEFINED;
+                    cells[sub_idx(dims, head)] = CELL_WILSONS_UNDEFINED;
+
+                    animate(&should_anim, &anim_delay, 1, maze, path, path_len);
                 }
                 // Assert that we did find an overlapping cell in the path.
-                assert(path_idx >= 0);
+                assert(path_len >= 1);
 
-                head = path[path_idx];
-                path_len = path_idx + 1;
+                animate(&should_anim, &anim_delay, 2, maze, path, path_len);
             }
             else if (next_cell == CELL_WILSONS_UNDEFINED)
             {
@@ -356,6 +459,8 @@ void generate_maze_wilsons(Maze *maze)
                 path[path_len] = head;
                 path_len += 1;
                 cells[sub_idx(dims, head)] = CELL_WILSONS_RANDOM_WALK;
+
+                animate(&should_anim, &anim_delay, 2, maze, path, path_len);
             }
             else
             {
@@ -365,19 +470,14 @@ void generate_maze_wilsons(Maze *maze)
         }
     }
 
-    cells[sub_idx(dims, vector2(0, 0))] = CELL_WILSONS_START;
-    cells[sub_idx(dims, vector2(sub_dims.x - 1, sub_dims.y - 1))] = CELL_WILSONS_GOAL;
+    cells[sub_idx(dims, vector2(0, 0))] = (CellWilsons) CELL_START;
+    cells[sub_idx(dims, vector2(sub_dims.x - 1, sub_dims.y - 1))] = (CellWilsons) CELL_GOAL;
 
     free(path);
 }
 
-void play()
+void play(Vector2 dims)
 {
-    Vector2 dims = {
-        .x = 21,
-        .y = 13,
-    };
-
     Maze maze = alloc_maze(dims);
 
     generate_maze_wilsons(&maze);
@@ -403,7 +503,7 @@ void play()
         clear();
         print_maze(start, maze);
         print_player(start, player);
-        mvprintw(STP_COL, STP_COL, "Total Steps Taken: %i", counter);
+        mvprintw(0, 0, "Total Steps Taken: %i", counter);
 
         // Update state.
         int c = getch();
@@ -440,7 +540,7 @@ void play()
     timeout(-1);
 }
 
-int main()
+int main(int argc, char * argv[])
 {
     // Initialize the maze
     setlocale(LC_ALL, "");
@@ -455,6 +555,20 @@ int main()
     assert(wcwidth(U'🌲') == MAZE_COL_WIDTH);
     assert(wcwidth(U'📌') == MAZE_COL_WIDTH);
 
+    Vector2 dims = vector2(15, 15);
+    if (argc >= 2) {
+        dims.x = atoi(argv[1]) * 2 + 1;
+    }
+    if (argc >= 3) {
+        dims.y = atoi(argv[2]) * 2 + 1;
+    }
+
+    if (dims.x < 3 || dims.y < 3)
+    {
+        fprintf(stderr, "Invoke the application as maze <x> <y> where <x> and <y> are non-zero integers.");   
+        return 1;
+    }
+    
     // Initialize the screen buffer for ncurses.
     if (initscr() == NULL)
     {
@@ -465,7 +579,7 @@ int main()
     noecho();    // do not show the user input
     curs_set(0); // hide blinking cursor
 
-    play();
+    play(dims);
 
     endwin();
 
