@@ -3,6 +3,9 @@
 #include <locale.h>
 #include <ncurses.h>
 #include <wchar.h>
+#include <stdio.h>
+#include <time.h>
+
 #include "lib.h"
 
 // define the global variables
@@ -22,6 +25,16 @@ typedef struct Vector2
     int x;
     int y;
 } Vector2;
+
+Vector2 vector2(int x, int y)
+{
+    return (Vector2){.x = x, .y = y};
+}
+
+bool vector2_eq(Vector2 a, Vector2 b)
+{
+    return a.x == b.x && a.y == b.y;
+}
 
 // A maze is defined as a grid of cells.
 typedef enum Cell
@@ -138,16 +151,236 @@ void fill_maze(Maze *maze)
     maze->cells[(maze->dims.y - 2) * maze->dims.x + (maze->dims.x - 2)] = CELL_GOAL;
 }
 
+// Generate a random number between 0 (inclusive) and high (exclusive).
+int r1(int high)
+{
+    int r;
+    do
+    {
+        r = rand();
+    } while (r > (RAND_MAX - (RAND_MAX % high)));
+    return r % high;
+}
+
+// Generate a random number between low (inclusive) and high (exclusive).
+int r2(int low, int high)
+{
+    assert(low < high);
+    return low + r1(high - low);
+}
+
+// Extends Cell
+typedef enum CellWilsons
+{
+    CELL_WILSONS_PATH = CELL_PATH,
+    CELL_WILSONS_WALL = CELL_WALL,
+    CELL_WILSONS_START = CELL_START,
+    CELL_WILSONS_GOAL = CELL_GOAL,
+    CELL_WILSONS_UNDEFINED = 'U',
+    CELL_WILSONS_RANDOM_WALK = 'R',
+} CellWilsons;
+
+int sub_idx(Vector2 dims, Vector2 idx)
+{
+    return (idx.y * 2 + 1) * dims.x + (idx.x * 2 + 1);
+}
+
+void generate_maze_wilsons(Maze *maze)
+{
+    Vector2 dims = maze->dims;
+
+    assert(dims.x >= 3);
+    assert(dims.y >= 3);
+    assert(dims.x % 2 == 1);
+    assert(dims.y % 2 == 1);
+
+    Vector2 sub_dims = {
+        .x = (dims.x - 1) / 2,
+        .y = (dims.y - 1) / 2,
+    };
+
+    CellWilsons *cells = maze->cells;
+    Vector2 *path = malloc(sizeof(Vector2) * sub_dims.x * sub_dims.y);
+
+    // Initialize the cells with the following pattern:
+    // # # # # #
+    // # U # U #
+    // # # # # #
+    for (int y = 0; y < dims.y; y++)
+    {
+        for (int x = 0; x < dims.x; x++)
+        {
+            cells[y * dims.x + x] = (y % 2 == 1 && x % 2 == 1) ? CELL_WILSONS_UNDEFINED : CELL_WILSONS_WALL;
+        }
+    }
+    // Mark one cell as part of the maze.
+    cells[1 * dims.x + 1] = CELL_WILSONS_PATH;
+
+    while (true)
+    {
+        // Compute the number of undefined cells.
+        int count = 0;
+        for (int y = 0; y < sub_dims.y; y += 1)
+        {
+            for (int x = 0; x < sub_dims.x; x += 1)
+            {
+                if (cells[sub_idx(dims, vector2(x, y))] == CELL_WILSONS_UNDEFINED)
+                {
+                    count += 1;
+                }
+            }
+        }
+        if (count == 0)
+        {
+            break;
+        }
+
+        // mvprintw(0, 0, "Remaining: %i", count);
+        // for (int y = 0; y < dims.y; y++)
+        // {
+        //     for (int x = 0; x < dims.x; x++)
+        //     {
+        //         mvaddch(2 + y, x, '0' + cells[y * dims.x + x]);
+        //     }
+        // }
+        // getch();
+
+        // Pick a starting point for the random walk.
+        Vector2 head;
+        {
+            int undefined_cell_count = r1(count);
+            bool found = false;
+            for (int y = 0; !found && y < sub_dims.y; y += 1)
+            {
+                for (int x = 0; !found && x < sub_dims.x; x += 1)
+                {
+                    if (cells[sub_idx(dims, vector2(x, y))] == CELL_WILSONS_UNDEFINED)
+                    {
+                        if (undefined_cell_count == 0)
+                        {
+                            head = vector2(x, y);
+                            found = true;
+                        }
+                        else
+                        {
+                            undefined_cell_count -= 1;
+                        }
+                    }
+                }
+            }
+            assert(found);
+        }
+
+        cells[sub_idx(dims, head)] = CELL_WILSONS_RANDOM_WALK;
+        path[0] = head;
+        int path_len = 1;
+
+        while (true)
+        {
+            // Compute the number of possible directions.
+            int direction = r1(4);
+            Vector2 next = head;
+            switch (direction)
+            {
+            case 0:
+                if (head.y == 0)
+                    continue;
+                next.y -= 1;
+                break;
+            case 1:
+                if (head.y == sub_dims.y - 1)
+                    continue;
+                next.y += 1;
+                break;
+            case 2:
+                if (head.x == 0)
+                    continue;
+                next.x -= 1;
+                break;
+            default:
+                if (head.x == sub_dims.x - 1)
+                    continue;
+                next.x += 1;
+                break;
+            }
+
+            // Prevent going in reverse.
+            if (path_len >= 2)
+            {
+                Vector2 last = path[path_len - 2];
+                if (vector2_eq(last, next))
+                    continue;
+            }
+
+            CellWilsons next_cell = cells[sub_idx(dims, next)];
+
+            if (next_cell == CELL_WILSONS_PATH)
+            {
+                // Finish the path.
+                Vector2 last = next;
+
+                for (int path_idx = path_len - 1; path_idx >= 0; path_idx--)
+                {
+                    Vector2 curr = path[path_idx];
+                    Vector2 d = {
+                        .x = curr.x - last.x,
+                        .y = curr.y - last.y,
+                    };
+                    cells[(last.y * 2 + 1 + d.y) * dims.x + (last.x * 2 + 1 + d.x)] = CELL_WILSONS_PATH;
+                    cells[sub_idx(dims, curr)] = CELL_WILSONS_PATH;
+                    last = curr;
+                }
+                break;
+            }
+            else if (next_cell == CELL_WILSONS_RANDOM_WALK)
+            {
+                // Erase loop.
+                int path_idx;
+                for (path_idx = path_len - 1; path_idx >= 0; path_idx--)
+                {
+                    Vector2 curr = path[path_idx];
+                    if (vector2_eq(next, curr))
+                        break;
+                    cells[sub_idx(dims, curr)] = CELL_WILSONS_UNDEFINED;
+                }
+                // Assert that we did find an overlapping cell in the path.
+                assert(path_idx >= 0);
+
+                head = path[path_idx];
+                path_len = path_idx + 1;
+            }
+            else if (next_cell == CELL_WILSONS_UNDEFINED)
+            {
+                // Mark as part of path.
+                head = next;
+                path[path_len] = head;
+                path_len += 1;
+                cells[sub_idx(dims, head)] = CELL_WILSONS_RANDOM_WALK;
+            }
+            else
+            {
+                // Unreachable.
+                assert(false);
+            }
+        }
+    }
+
+    cells[sub_idx(dims, vector2(0, 0))] = CELL_WILSONS_START;
+    cells[sub_idx(dims, vector2(sub_dims.x - 1, sub_dims.y - 1))] = CELL_WILSONS_GOAL;
+
+    free(path);
+}
+
 void play()
 {
     Vector2 dims = {
-        .x = 10,
-        .y = 6,
+        .x = 21,
+        .y = 13,
     };
 
     Maze maze = alloc_maze(dims);
 
-    fill_maze(&maze);
+    generate_maze_wilsons(&maze);
 
     // Player position.
     Player player = {
@@ -211,6 +444,9 @@ int main()
 {
     // Initialize the maze
     setlocale(LC_ALL, "");
+
+    // This will use the same seed every second, but that's okay for our application.
+    srand((unsigned int)time(NULL));
 
     // Ensure that all characters we use to print the maze are indeed of printing width 2.
     assert(wcwidth(U'😃') == MAZE_COL_WIDTH);
