@@ -12,9 +12,16 @@ cc_binary(
     }),
 )
 
+cc_library(
+    name = "lib",
+    srcs = ["lib.c"],
+    hdrs = ["lib.h"],
+)
+
 cc_binary(
     name = "maze",
-    srcs = ["maze.c", "lib.c", "lib.h"],
+    srcs = ["maze.c"],
+    deps = ["lib"],
     linkopts = select({
         "@platforms//os:osx": ["-lncurses"],
         "//conditions:default": ["-lncursesw"],
@@ -23,4 +30,10 @@ cc_binary(
         "@platforms//os:linux": ["_XOPEN_SOURCE"],
         "//conditions:default": [],
     }),
+)
+
+cc_binary(
+    name = "test",
+    deps = ["lib"],
+    srcs = ["test.c"],
 )

@@ -1,38 +1,109 @@
+#include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include "lib.h"
 
-const char *PATH = "🌿";
-const char *GOAL = "🚩";
-const char *PLAYER = "🚶";
-const char *WALL = "🧱";
-
-const int MAZE_ROWS = 7;
-const int MAZE_COLS = 7;
-
-void printMaze(const char *maze[MAZE_ROWS][MAZE_COLS])
+void test_vector2()
 {
-    printf("\n");
-    for (int i = 0; i < MAZE_ROWS; i++)
-    {
-        for (int j = 0; j < MAZE_COLS; j++)
-        {
-            printf("%s ", maze[i][j]);
-        }
-        printf("\n");
-    }
+    Vector2 v = vector2(1, 2);
+    assert(v.x == 1);
+    assert(v.y == 2);
+}
+
+// TASK: Think if you can change the implementation of vector2_eq so that it does NOT do the right thing anymore, but do it in such a way that the test below still passes (without modification).
+void test_vector2_eq()
+{
+    assert(vector2_eq(
+        vector2(1, 2),
+        vector2(1, 2)));
+
+    assert(!vector2_eq(
+        vector2(1, 2),
+        vector2(1, 3)));
+
+    assert(!vector2_eq(
+        vector2(1, 2),
+        vector2(2, 2)));
+}
+
+void test_vector2_add()
+{
+
+    assert(vector2_eq((vector2_add(
+                          vector2(1, 2),
+                          vector2(1, 2))),
+                      vector2(2, 4)));
+
+    assert(!vector2_eq((vector2_add(
+                           vector2(2, 2),
+                           vector2(1, 5))),
+                       vector2(5, 7)));
+
+    assert(!vector2_eq((vector2_add(
+                           vector2(3, 2),
+                           vector2(6, 7))),
+                       vector2(9, 2)));
+}
+
+void test_idx_2to1()
+{
+    Vector2 index2 = {
+        .x = 2,
+        .y = 1,
+    };
+
+    Vector2 dimensions = {
+        .x = 3,
+        .y = 3,
+    };
+
+    int correct_idx = 5;
+
+    assert(idx_2to1(index2, dimensions) == correct_idx);
+}
+
+void test_idx_1to2()
+{
+    Vector2 dimensions = {
+        .x = 5,
+        .y = 5,
+    };
+
+    int index1 = 12;
+
+    Vector2 correct_result = {
+        .x = 2,
+        .y = 2,
+    };
+
+    Vector2 result = idx_1to2(index1, dimensions);
+
+    assert(vector2_eq(result, correct_result));
+}
+
+// TASK: Write a function vector2_add which adds two vectors together and returns the result (also a vector), and write a test function for it. Make sure to also call the test function from main!
+
+void test_fill_cell_with()
+{
+    Maze maze = alloc_maze(vector2(2, 3));
+    fill_maze_with(&maze, CELL_WALL);
+    assert(maze.cells[0] == CELL_WALL);
+    assert(maze.cells[1] == CELL_WALL);
+    assert(maze.cells[2] == CELL_WALL);
+    assert(maze.cells[3] == CELL_WALL);
+    assert(maze.cells[4] == CELL_WALL);
+    assert(maze.cells[5] == CELL_WALL);
 }
 
 int main()
 {
-    const char *maze[MAZE_ROWS][MAZE_COLS] =
-        {
-            {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
-            {WALL, PLAYER, PATH, WALL, PATH, WALL, WALL},
-            {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
-            {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
-            {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
-            {WALL, PATH, PATH, WALL, WALL, PATH, WALL},
-            {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}};
+    test_vector2();
+    test_vector2_eq();
+    test_vector2_add();
+    test_idx_2to1();
+    test_idx_1to2();
+    test_fill_cell_with();
 
-    // Print the maze
-    printMaze(maze);
+    printf("\nTests Passed!\n");
 }
