@@ -25,14 +25,6 @@ Vector2 vector2(int x, int y)
 bool vector2_eq(Vector2 a, Vector2 b)
 {
     return a.x == b.x && a.y == b.y;
-    // if ((b.x == 1 && b.y == 3) || (b.x == 2 && b.y == 2))
-    // {
-    //     return false;
-    // }
-    // else
-    // {
-    //     return true;
-    // }
 }
 
 Vector2 vector2_add(Vector2 a, Vector2 b)
@@ -72,39 +64,74 @@ void fill_maze_with(Maze *maze, Cell cell)
     }
 }
 
+Vector2 to_sub_idx(Vector2 idx)
+{
+    return (Vector2){
+        .x = (idx.x - 1) / 2,
+        .y = (idx.y - 1) / 2,
+    };
+}
+
+Vector2 from_sub_idx(Vector2 sub_idx)
+{
+    return (Vector2){
+        .x = sub_idx.x * 2 + 1,
+        .y = sub_idx.y * 2 + 1,
+    };
+}
+
+Cell maze_cell(Maze *maze, Vector2 idx)
+{
+    return maze->cells[idx_2to1(idx, maze->dims)];
+}
+
+Cell *maze_cell_ptr(Maze *maze, Vector2 idx)
+{
+    return &(maze->cells[idx_2to1(idx, maze->dims)]);
+}
+
+// The sub maze is composed of the entries at the odd indices in the full maze.
+// This function returns the cell by value at the sub index.
+Cell sub_maze_cell(Maze *maze, Vector2 sub_idx)
+{
+    return maze_cell(maze, from_sub_idx(sub_idx));
+}
+
+Cell *sub_maze_cell_ptr(Maze *maze, Vector2 sub_idx)
+{
+    return maze_cell_ptr(maze, from_sub_idx(sub_idx));
+}
+
+bool idx_in_bound(Vector2 idx, Vector2 dims)
+{
+    return idx.x >= 0 && idx.x < dims.x && idx.y >= 0 && idx.y < dims.y;
+}
+
 bool prim_is_candidate(Maze *maze, int idx)
 {
-    Vector2 idx2 = idx_1to2(idx, maze->dims);
+    Vector2 sub_dims = to_sub_idx(maze->dims);
+    Vector2 sub_idx = to_sub_idx(idx_1to2(idx, maze->dims));
 
-    if(maze->cells[idx] != CELL_PATH)
+    if (sub_maze_cell(maze, sub_idx) != CELL_PATH)
     {
         return false;
     }
-    
-    int counter = 0;
-    if ((idx2.x - 2) > 0 && maze->cells[idx - 2] == CELL_WALL)
+
+    Vector2 deltas[4] = {
+        vector2(0, -1),
+        vector2(-1, 0),
+        vector2(0, 1),
+        vector2(1, 0),
+    };
+
+    for (int i = 0; i < 4; i++)
     {
-        counter++;
-    }
-    else if ((idx2.x + 2) < maze->dims.x && maze->cells[idx + 2] == CELL_WALL)
-    {
-        counter++;
-    }
-    else if ((idx2.y + 2) < maze->dims.y && maze->cells[idx + 2 * maze->dims.x] == CELL_WALL)
-    {
-        counter++;
-    }
-    else if ((idx2.y - 2) > 0 && maze->cells[idx - 2 * maze->dims.x] == CELL_WALL)
-    {
-        counter++;
+        Vector2 adj_sub_idx = vector2_add(sub_idx, deltas[i]);
+        if (idx_in_bound(adj_sub_idx, sub_dims) && sub_maze_cell(maze, adj_sub_idx) == CELL_WALL)
+        {
+            return true;
+        }
     }
 
-    if (counter > 0) // means at lease one neighboring cells is WALL
-    {
-        return true;
-    }
-    else{
-        return false;
-    }
-
+    return false;
 }
