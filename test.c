@@ -116,9 +116,9 @@ void test_prim_is_candidate()
     assert(prim_is_candidate(&maze, cand_idx));
     maze.cells[cand_idx + 2] = CELL_PATH;
     assert(prim_is_candidate(&maze, cand_idx));
-    maze.cells[cand_idx - maze.dims.x] = CELL_PATH;
+    maze.cells[cand_idx - 2 * maze.dims.x] = CELL_PATH;
     assert(prim_is_candidate(&maze, cand_idx));
-    maze.cells[cand_idx + maze.dims.x] = CELL_PATH;
+    maze.cells[cand_idx + 2 * maze.dims.x] = CELL_PATH;
     assert(!prim_is_candidate(&maze, cand_idx));
 }
 

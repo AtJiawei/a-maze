@@ -105,96 +105,34 @@ void fill_maze(Maze *maze)
         .y = (dims.y - 1) / 2,
     };
 
-    int candidate_count = sub_dims.x * sub_dims.y; // got the result 12 in this case (X == 7 and Y == 9)
-
-    int candidate_indices[candidate_count]; // to store the possible valid cell_path candidates and later adjacent cells
-    int candidate_indices_len = 0;          // it functions as a counter to index the array
+    int start_candidate_count = sub_dims.x * sub_dims.y; // got the result 12 in this case (X == 7 and Y == 9)
+    int rdm_num = rand() % start_candidate_count;
+    int candidate_indices_len = 0; // it functions as a counter to index the array
+    int start_idx = 0;
 
     for (int y = 1; y < dims.y; y += 2)
     {
         for (int x = 1; x < dims.x; x += 2)
         {
-            int idx = idx_2to1(vector2(x, y), maze->dims);
-            candidate_indices[candidate_indices_len++] = idx; // candidate_indices_len will increase by 1 after this function is called.
-            // more: int x = 5; int y = x++; will result in y = 5, x = 6. However, int x = 5; int y = ++x; will result in x = 6 and y = 6 because the increment happens before returning the value.
+            if (candidate_indices_len == rdm_num)
+            {
+                start_idx = idx_2to1(vector2(x, y), maze->dims);
+                goto home;
+            }
+            else
+            {
+                candidate_indices_len++;
+            }
         }
     }
-
-    int rdm_num = rand() % candidate_count;
-    int rdm_idx = candidate_indices[rdm_num];
-    maze->cells[rdm_idx] = CELL_PATH;
+home:
+    maze->cells[start_idx] = CELL_PATH;
     // till this line, the starting cell is selected and changed to CELL_PATH. Codes compiled.
-    // from there, we start to check the adjacent cells
+    int candidate_count = 0;
+    for (int y = 1;)
 
-    int adj_indices[candidate_count]; // to store the adjacent cells;
-    for (int i = 0; i < candidate_count; i++)
-    {
-        adj_indices[i] = 0; // to initialize all the value to 0
-    }
-
-    int adj_indices_len = 0; // to count the valid adjacent cells. to be used to generaze the randoem number
-
-    // TODO: I think here starts the loop where the loop should start. the loop stops when adj_counter = 12. Write this loop condition later. Maybe write an extra function for this step?
-
-    while (adj_indices_len < candidate_indices_len)
-    {
-        for (int i = 0; i < candidate_indices_len; i++) // a function can be written for each condition below.
-        {
-            if ((candidate_indices[i] == rdm_idx - 2) && (maze->cells[rdm_idx - 2] != CELL_PATH))
-            {
-                adj_indices[adj_indices_len++] = rdm_idx - 2;
-                break;
-            }
-            if ((candidate_indices[i] == rdm_idx + 2) && (maze->cells[rdm_idx + 2] != CELL_PATH))
-            {
-                adj_indices[adj_indices_len++] = rdm_idx + 2;
-                break;
-            }
-            if ((candidate_indices[i] == rdm_idx + 2 * sub_dims.x) && (maze->cells[rdm_idx + 2 * sub_dims.x] != CELL_PATH))
-            {
-                adj_indices[adj_indices_len++] = rdm_idx + 2 * sub_dims.x;
-                break;
-            }
-            if ((candidate_indices[i] == rdm_idx - 2 * sub_dims.x) && (maze->cells[rdm_idx - 2 * sub_dims.x] != CELL_PATH))
-            {
-                adj_indices[adj_indices_len++] = rdm_idx - 2 * sub_dims.x;
-                break;
-            }
-        }
-
-        int rdm_idx_new;
-        do
-        {
-            rdm_idx_new = adj_indices[rand() % adj_indices_len];
-        } while (rdm_idx_new != 0);
-
-        maze->cells[rdm_idx_new] = CELL_PATH;
-
-        // also change the cell between the newly selected cell and previous cell as path to connect two cells
-        int d_idx = rdm_idx_new - rdm_idx;
-        if (d_idx == 2)
-        {
-            maze->cells[rdm_idx + 1] = CELL_PATH;
-        }
-        if (d_idx == -2)
-        {
-            maze->cells[rdm_idx - 1] = CELL_PATH;
-        }
-        if (d_idx == 2 * sub_dims.x)
-        {
-            maze->cells[rdm_idx + sub_dims.x] = CELL_PATH;
-        }
-        if (d_idx == -(2 * sub_dims.x))
-        {
-            maze->cells[rdm_idx - sub_dims.x] = CELL_PATH;
-        }
-
-        adj_indices[rdm_idx_new] = 0;
-        rdm_idx = rdm_idx_new; // update rdm_idx to restart the loop
-    }
-
-    // Set the start and goal.
-    maze->cells[1 * maze->dims.x + 1] = CELL_START;
+        // Set the start and goal.
+        maze->cells[1 * maze->dims.x + 1] = CELL_START;
     maze->cells[(maze->dims.y - 2) * maze->dims.x + (maze->dims.x - 2)] = CELL_GOAL;
 }
 
@@ -272,7 +210,7 @@ int main()
     // Initialize the maze
     setlocale(LC_ALL, "");
 
-    // srand((unsigned int)time(NULL)); TODO: enable this when maze generation is done.
+    // srand((unsigned int)time(NULL)); //TODO: enable this when maze generation is done.
 
     // Ensure that all characters we use to print the maze are indeed of printing width 2.
     assert(wcwidth(U'😃') == MAZE_COL_WIDTH);

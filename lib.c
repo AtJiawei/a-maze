@@ -71,3 +71,40 @@ void fill_maze_with(Maze *maze, Cell cell)
         maze->cells[i] = cell;
     }
 }
+
+bool prim_is_candidate(Maze *maze, int idx)
+{
+    Vector2 idx2 = idx_1to2(idx, maze->dims);
+
+    if(maze->cells[idx] != CELL_PATH)
+    {
+        return false;
+    }
+    
+    int counter = 0;
+    if ((idx2.x - 2) > 0 && maze->cells[idx - 2] == CELL_WALL)
+    {
+        counter++;
+    }
+    else if ((idx2.x + 2) < maze->dims.x && maze->cells[idx + 2] == CELL_WALL)
+    {
+        counter++;
+    }
+    else if ((idx2.y + 2) < maze->dims.y && maze->cells[idx + 2 * maze->dims.x] == CELL_WALL)
+    {
+        counter++;
+    }
+    else if ((idx2.y - 2) > 0 && maze->cells[idx - 2 * maze->dims.x] == CELL_WALL)
+    {
+        counter++;
+    }
+
+    if (counter > 0) // means at lease one neighboring cells is WALL
+    {
+        return true;
+    }
+    else{
+        return false;
+    }
+
+}
