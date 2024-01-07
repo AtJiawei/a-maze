@@ -11,7 +11,6 @@ int min(int a, int b)
     return a < b ? a : b;
 }
 
-// Returns min if value < min, max if value > max, and otherwise the value itself.
 int clamp(int value, int min_, int max_)
 {
     return min(max(value, min_), max_);
@@ -90,8 +89,7 @@ Cell *maze_cell_ptr(Maze *maze, Vector2 idx)
     return &(maze->cells[idx_2to1(idx, maze->dims)]);
 }
 
-// The sub maze is composed of the entries at the odd indices in the full maze.
-// This function returns the cell by value at the sub index.
+
 Cell sub_maze_cell(Maze *maze, Vector2 sub_idx)
 {
     return maze_cell(maze, from_sub_idx(sub_idx));
