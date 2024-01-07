@@ -96,6 +96,32 @@ void test_fill_cell_with()
     assert(maze.cells[5] == CELL_WALL);
 }
 
+void test_prim_is_candidate()
+{
+    Maze maze = alloc_maze(vector2(7, 7));
+    fill_maze_with(&maze, CELL_WALL);
+    int cand_idx = idx_2to1(vector2(3, 3), maze.dims);
+    maze.cells[cand_idx] = CELL_PATH;
+    /*
+    w w w w w w w
+    w w w w w w w
+    w w w w w w w
+    w w w p w w w
+    w w w w w w w
+    w w w w w w w
+    w w w w w w w
+    */
+    assert(prim_is_candidate(&maze, cand_idx));
+    maze.cells[cand_idx - 2] = CELL_PATH;
+    assert(prim_is_candidate(&maze, cand_idx));
+    maze.cells[cand_idx + 2] = CELL_PATH;
+    assert(prim_is_candidate(&maze, cand_idx));
+    maze.cells[cand_idx - maze.dims.x] = CELL_PATH;
+    assert(prim_is_candidate(&maze, cand_idx));
+    maze.cells[cand_idx + maze.dims.x] = CELL_PATH;
+    assert(!prim_is_candidate(&maze, cand_idx));
+}
+
 int main()
 {
     test_vector2();
@@ -104,6 +130,7 @@ int main()
     test_idx_2to1();
     test_idx_1to2();
     test_fill_cell_with();
+    test_prim_is_candidate();
 
     printf("\nTests Passed!\n");
 }

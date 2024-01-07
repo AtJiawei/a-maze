@@ -43,3 +43,6 @@ typedef struct Maze
 Maze alloc_maze(Vector2 dims);
 
 void fill_maze_with(Maze *maze, Cell cell);
+
+// The function returns whether a cell is a candidate for expansion.
+bool prim_is_candidate(Maze *maze, int idx);
