@@ -128,11 +128,18 @@ void fill_maze(Maze *maze)
 home:
     maze->cells[start_idx] = CELL_PATH;
     // till this line, the starting cell is selected and changed to CELL_PATH. Codes compiled.
-    int candidate_count = 0;
-    for (int y = 1;)
+    while (1)
+    {
+        int candidate_count = count_candidate(maze);
+        if (candidate_count == 0)
+            break;
+        int chosen_candidate_idx = choose_random_candidate(candidate_count, maze);
+        int target_count = count_target(maze, chosen_candidate_idx);
+        choose_random_target(maze, target_count, chosen_candidate_idx);
+    }
 
-        // Set the start and goal.
-        maze->cells[1 * maze->dims.x + 1] = CELL_START;
+    // Set the start and goal.
+    maze->cells[1 * maze->dims.x + 1] = CELL_START;
     maze->cells[(maze->dims.y - 2) * maze->dims.x + (maze->dims.x - 2)] = CELL_GOAL;
 }
 

@@ -63,7 +63,19 @@ Cell *maze_cell_ptr(Maze *maze, Vector2 idx);
 // This function returns the cell by value at the sub index.
 Cell sub_maze_cell(Maze *maze, Vector2 sub_idx);
 
+// This function returns the cell by reference at the sub index.
 Cell *sub_maze_cell_ptr(Maze *maze, Vector2 sub_idx);
 
+// The function checks if a 2D index is within the bound of a matrix (dims)
 bool idx_in_bound(Vector2 idx, Vector2 dims);
 
+// The functions takes a 1D maze index and return the count of expansion candidate
+int count_candidate(Maze *maze);
+
+// The function returns a 1D maze index of a chosen candidate for path expansion
+int choose_random_candidate(int candidate_counter, Maze *maze);
+
+// The function takes an index (1D) of chosen expansion candidate in maze and return the count of target;
+int count_target(Maze *maze, int idx);
+
+void choose_random_target(Maze *maze, int target_count, int candidate_index);

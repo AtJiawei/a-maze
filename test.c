@@ -4,6 +4,57 @@
 #include <stdbool.h>
 #include "lib.h"
 
+Maze test_maze(char *contents)
+{
+    Vector2 dims = vector2(0, 0);
+    while (1)
+    {
+        // Expected at least one newline before the end of the string.
+        assert(contents[dims.x] != '\0');
+        if (contents[dims.x] == '\n')
+        {
+            dims.y += 1;
+            break;
+        };
+        dims.x += 1;
+    }
+
+    while (contents[dims.y * (dims.x + 1)] != '\0')
+    {
+        for (int x = 1; x < dims.x; x++)
+            assert(contents[dims.y * (dims.x + 1) + x] != '\0');
+
+        // Lines should end with a newline.
+        assert(contents[(dims.y + 1) * (dims.x + 1) - 1] == '\n');
+        dims.y += 1;
+    }
+
+    Maze maze = alloc_maze(dims);
+
+    for (int y = 0; y < dims.y; y++)
+    {
+        for (int x = 0; x < dims.x; x++)
+        {
+            char c = contents[y * (dims.x + 1) + x];
+            if (c == 'w')
+            {
+                *maze_cell_ptr(&maze, vector2(x, y)) = CELL_WALL;
+            }
+            else if (c == 'p')
+            {
+                *maze_cell_ptr(&maze, vector2(x, y)) = CELL_PATH;
+            }
+            else
+            {
+                // Unknown character type.
+                assert(0);
+            }
+        }
+    }
+
+    return maze;
+}
+
 void test_vector2()
 {
     Vector2 v = vector2(1, 2);
@@ -98,22 +149,28 @@ void test_fill_cell_with()
 
 void test_prim_is_candidate()
 {
-    Maze maze = alloc_maze(vector2(7, 7));
-    fill_maze_with(&maze, CELL_WALL);
+    Maze maze = test_maze(
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwpwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n");
+
     int cand_idx = idx_2to1(vector2(3, 3), maze.dims);
-    maze.cells[cand_idx] = CELL_PATH;
-    /*
-    w w w w w w w
-    w w w w w w w
-    w w w w w w w
-    w w w p w w w
-    w w w w w w w
-    w w w w w w w
-    w w w w w w w
-    */
     assert(prim_is_candidate(&maze, cand_idx));
-    maze.cells[cand_idx - 2] = CELL_PATH;
+
+    maze = test_maze(
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wpppwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n");
     assert(prim_is_candidate(&maze, cand_idx));
+
     maze.cells[cand_idx + 2] = CELL_PATH;
     assert(prim_is_candidate(&maze, cand_idx));
     maze.cells[cand_idx - 2 * maze.dims.x] = CELL_PATH;
