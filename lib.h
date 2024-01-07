@@ -70,12 +70,14 @@ Cell *sub_maze_cell_ptr(Maze *maze, Vector2 sub_idx);
 bool idx_in_bound(Vector2 idx, Vector2 dims);
 
 // The functions takes a 1D maze index and return the count of expansion candidate
-int count_candidate(Maze *maze);
+int prim_count_candidates(Maze *maze);
+
+int maze_cell_count(Maze *maze);
 
 // The function returns a 1D maze index of a chosen candidate for path expansion
 int choose_random_candidate(int candidate_counter, Maze *maze);
 
 // The function takes an index (1D) of chosen expansion candidate in maze and return the count of target;
-int count_target(Maze *maze, int idx);
+int prim_count_candidate_targets(Maze *maze, int idx);
 
 void choose_random_target(Maze *maze, int target_count, int candidate_index);

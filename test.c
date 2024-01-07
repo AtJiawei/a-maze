@@ -179,6 +179,8 @@ void test_prim_is_candidate()
     assert(!prim_is_candidate(&maze, cand_idx));
 }
 
+void 
+
 int main()
 {
     test_vector2();

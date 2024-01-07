@@ -57,7 +57,7 @@ Maze alloc_maze(Vector2 dims)
 
 void fill_maze_with(Maze *maze, Cell cell)
 {
-    int n = maze->dims.x * maze->dims.y;
+    int n = maze_cell_count(maze);
     for (int i = 0; i < n; i++)
     {
         maze->cells[i] = cell;
@@ -105,15 +105,11 @@ bool idx_in_bound(Vector2 idx, Vector2 dims)
     return idx.x >= 0 && idx.x < dims.x && idx.y >= 0 && idx.y < dims.y;
 }
 
-bool prim_is_candidate(Maze *maze, int idx)
+// TO BE TESTED: a function takes the candidate index and return the target count
+int prim_count_candidate_targets(Maze *maze, int idx)
 {
     Vector2 sub_dims = to_sub_idx(maze->dims);
     Vector2 sub_idx = to_sub_idx(idx_1to2(idx, maze->dims));
-
-    if (sub_maze_cell(maze, sub_idx) != CELL_PATH)
-    {
-        return false;
-    }
 
     Vector2 deltas[4] = {
         vector2(0, -1),
@@ -122,21 +118,26 @@ bool prim_is_candidate(Maze *maze, int idx)
         vector2(1, 0),
     };
 
+    int counter = 0;
     for (int i = 0; i < 4; i++)
     {
         Vector2 adj_sub_idx = vector2_add(sub_idx, deltas[i]);
         if (idx_in_bound(adj_sub_idx, sub_dims) && sub_maze_cell(maze, adj_sub_idx) == CELL_WALL)
         {
-            return true;
+            counter++;
         }
     }
-
-    return false;
+    return counter;
 }
 
-int count_candidate(Maze *maze)
+bool prim_is_candidate(Maze *maze, int idx)
 {
-    int total_maze_cell = maze->dims.x * maze->dims.y;
+    return maze->cells[idx] == CELL_PATH && prim_count_candidate_targets(maze, idx) > 0;
+}
+
+int prim_count_candidates(Maze *maze)
+{
+    int total_maze_cell = maze_cell_count(maze);
     int counter = 0;
 
     for (int i = 0; i < total_maze_cell; i++)
@@ -149,11 +150,16 @@ int count_candidate(Maze *maze)
     return counter;
 }
 
+int maze_cell_count(Maze *maze)
+{
+    return maze->dims.x * maze->dims.y;
+}
+
 // TO BE TESTED: a function takes the candidate count and returns the candidate index
 int choose_random_candidate(int candidate_count, Maze *maze)
 {
     int rdm = rand() % candidate_count;
-    int total_maze_cell = maze->dims.x * maze->dims.y;
+    int total_maze_cell = maze_cell_count(maze);
     int counter = 0;
 
     for (int i = 0; i < total_maze_cell; i++)
@@ -170,32 +176,6 @@ int choose_random_candidate(int candidate_count, Maze *maze)
 
     // if we reach here, the candidate count was incorrect and the randome number picked was larger than the actual candidate count
     assert(false);
-}
-
-// TO BE TESTED: a function takes the candidate index and return the target count
-int count_target(Maze *maze, int idx)
-{
-    int counter = 0;
-
-    Vector2 sub_dims = to_sub_idx(maze->dims);
-    Vector2 sub_idx = to_sub_idx(idx_1to2(idx, maze->dims));
-
-    Vector2 deltas[4] = {
-        vector2(0, -1),
-        vector2(-1, 0),
-        vector2(0, 1),
-        vector2(1, 0),
-    };
-
-    for (int i = 0; i < 4; i++)
-    {
-        Vector2 adj_sub_idx = vector2_add(sub_idx, deltas[i]);
-        if (idx_in_bound(adj_sub_idx, sub_dims) && sub_maze_cell(maze, adj_sub_idx) == CELL_WALL)
-        {
-            counter++;
-        }
-    }
-    return counter;
 }
 
 // TO BE TESTED. This function returns the 1D maze index of the random target

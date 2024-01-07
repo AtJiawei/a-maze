@@ -130,11 +130,11 @@ home:
     // till this line, the starting cell is selected and changed to CELL_PATH. Codes compiled.
     while (1)
     {
-        int candidate_count = count_candidate(maze);
+        int candidate_count = prim_count_candidates(maze);
         if (candidate_count == 0)
             break;
         int chosen_candidate_idx = choose_random_candidate(candidate_count, maze);
-        int target_count = count_target(maze, chosen_candidate_idx);
+        int target_count = prim_count_candidate_targets(maze, chosen_candidate_idx);
         choose_random_target(maze, target_count, chosen_candidate_idx);
     }
 
