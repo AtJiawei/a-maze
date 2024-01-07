@@ -137,14 +137,17 @@ bool prim_is_candidate(Maze *maze, int idx)
 
 int prim_count_candidates(Maze *maze)
 {
-    int total_maze_cell = maze_cell_count(maze);
     int counter = 0;
-
-    for (int i = 0; i < total_maze_cell; i++)
+    Vector2 sub_dims = to_sub_idx(maze->dims);
+    for (int y = 0; y < sub_dims.y; y++)
     {
-        if (prim_is_candidate(maze, i))
+        for (int x = 0; x < sub_dims.x; x++)
         {
-            counter++;
+            int cand_idx = idx_2to1(from_sub_idx(vector2(x, y)), maze->dims);
+            if (prim_is_candidate(maze, cand_idx))
+            {
+                counter++;
+            }
         }
     }
     return counter;
@@ -156,21 +159,25 @@ int maze_cell_count(Maze *maze)
 }
 
 // TO BE TESTED: a function takes the candidate count and returns the candidate index
-int choose_random_candidate(int candidate_count, Maze *maze)
+int prim_choose_random_candidate(Maze *maze, int candidate_count)
 {
     int rdm = rand() % candidate_count;
-    int total_maze_cell = maze_cell_count(maze);
-    int counter = 0;
 
-    for (int i = 0; i < total_maze_cell; i++)
+    int counter = 0;
+    Vector2 sub_dims = to_sub_idx(maze->dims);
+    for (int y = 0; y < sub_dims.y; y++)
     {
-        if (prim_is_candidate(maze, i))
+        for (int x = 0; x < sub_dims.x; x++)
         {
-            if (counter == rdm)
+            int cand_idx = idx_2to1(from_sub_idx(vector2(x, y)), maze->dims);
+            if (prim_is_candidate(maze, cand_idx))
             {
-                return i;
+                if (counter == rdm)
+                {
+                    return cand_idx;
+                }
+                counter++;
             }
-            counter++;
         }
     }
 

@@ -100,47 +100,21 @@ void fill_maze(Maze *maze)
     // Store the length of array in a variable for easy reference:
     fill_maze_with(maze, CELL_WALL);
 
-    Vector2 sub_dims = (Vector2){
-        .x = (dims.x - 1) / 2,
-        .y = (dims.y - 1) / 2,
-    };
+    maze->cells[idx_2to1(vector2(1, 1), dims)] = CELL_PATH;
 
-    int start_candidate_count = sub_dims.x * sub_dims.y; // got the result 12 in this case (X == 7 and Y == 9)
-    int rdm_num = rand() % start_candidate_count;
-    int candidate_indices_len = 0; // it functions as a counter to index the array
-    int start_idx = 0;
-
-    for (int y = 1; y < dims.y; y += 2)
-    {
-        for (int x = 1; x < dims.x; x += 2)
-        {
-            if (candidate_indices_len == rdm_num)
-            {
-                start_idx = idx_2to1(vector2(x, y), maze->dims);
-                goto home;
-            }
-            else
-            {
-                candidate_indices_len++;
-            }
-        }
-    }
-home:
-    maze->cells[start_idx] = CELL_PATH;
-    // till this line, the starting cell is selected and changed to CELL_PATH. Codes compiled.
     while (1)
     {
         int candidate_count = prim_count_candidates(maze);
         if (candidate_count == 0)
             break;
-        int chosen_candidate_idx = choose_random_candidate(candidate_count, maze);
+        int chosen_candidate_idx = prim_choose_random_candidate(maze, candidate_count);
         int target_count = prim_count_candidate_targets(maze, chosen_candidate_idx);
         choose_random_target(maze, target_count, chosen_candidate_idx);
     }
 
     // Set the start and goal.
-    maze->cells[1 * maze->dims.x + 1] = CELL_START;
-    maze->cells[(maze->dims.y - 2) * maze->dims.x + (maze->dims.x - 2)] = CELL_GOAL;
+    maze->cells[1 * dims.x + 1] = CELL_START;
+    maze->cells[(dims.y - 2) * dims.x + (dims.x - 2)] = CELL_GOAL;
 }
 
 void play()
