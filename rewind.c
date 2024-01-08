@@ -1,12 +1,13 @@
-//1st working version as backup
+// version 01: added walls around the whole maze-> so only need to check if !=Wall. no need to check borders anymore.
 #include <stdio.h>
 //define the global variables
-const int ROWS = 5;
-const int COLS = 5;
 const char PATH = '-';
 const char GOAL = '!';
 const char PLAYER = 'V';
 const char WALL = '#';
+
+const int ROWS = 7;
+const int COLS = 7;
 
 int updateMaze(char Move, char maze[ROWS][COLS]) 
 {
@@ -26,7 +27,7 @@ int updateMaze(char Move, char maze[ROWS][COLS])
     }
 
 outer:
-    if (Move == 'd' && y != COLS - 1 && maze[x][y + 1] != WALL)
+    if (Move == 'd' && maze[x][y + 1] != WALL)
     {
         if(maze[x][y + 1] == GOAL)
         {
@@ -42,7 +43,7 @@ outer:
         }
     }
 
-    if (Move == 's' && x != ROWS - 1 && maze[x + 1][y] != WALL)
+    if (Move == 's' && maze[x + 1][y] != WALL)
     {
         if(maze[x + 1][y] == GOAL)
         {
@@ -58,7 +59,7 @@ outer:
         }
     }
 
-    if (Move == 'a' && y != 0 && maze[x][y - 1] != WALL)
+    if (Move == 'a' && maze[x][y - 1] != WALL)
     {
         if(maze[x][y - 1] == GOAL)
         {
@@ -74,7 +75,7 @@ outer:
         }
     }
 
-    if (Move == 'w' && x != 0 && maze[x - 1][y] != WALL)
+    if (Move == 'w' && maze[x - 1][y] != WALL)
     {
         if(maze[x - 1][y]== GOAL)
         {
@@ -141,11 +142,13 @@ int main()
     // Initialize the maze
     char maze[ROWS][COLS] =
         {
-            {PLAYER, PATH, WALL, PATH, WALL},
-            {WALL, PATH, WALL, PATH, PATH},
-            {PATH, PATH, PATH, PATH, WALL},
-            {PATH, WALL, WALL, PATH, PATH},
-            {PATH, PATH, WALL, WALL, GOAL}
+            {WALL, WALL, WALL, WALL, WALL, WALL, WALL},
+            {WALL, PLAYER, PATH, WALL, PATH, WALL, WALL},
+            {WALL, WALL, PATH, WALL, PATH, PATH, WALL},
+            {WALL, PATH, PATH, PATH, PATH, WALL, WALL},
+            {WALL, PATH, WALL, WALL, PATH, PATH, WALL},
+            {WALL, PATH, PATH, WALL, PATH, PATH, WALL},
+            {WALL, WALL, WALL, WALL, WALL, GOAL, WALL}
         };
 
     // Print the maze

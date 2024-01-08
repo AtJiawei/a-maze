@@ -37,3 +37,17 @@ cc_binary(
     deps = ["lib"],
     srcs = ["test.c"],
 )
+
+cc_binary(
+    name = "rewind",
+    srcs = ["rewind.c"],
+    linkopts = select({
+        "@platforms//os:osx": ["-lncurses"],
+        "//conditions:default": ["-lncursesw"],
+    }),
+    defines = select({
+        "@platforms//os:linux": ["_XOPEN_SOURCE"],
+        "//conditions:default": [],
+    }),
+)
+

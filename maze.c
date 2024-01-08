@@ -107,9 +107,11 @@ void fill_maze(Maze *maze)
         int candidate_count = prim_count_candidates(maze);
         if (candidate_count == 0)
             break;
-        int chosen_candidate_idx = prim_choose_random_candidate(maze, candidate_count);
+        int rdm = rand() % candidate_count;
+        int chosen_candidate_idx = prim_pick_random_candidate(maze, rdm);
         int target_count = prim_count_candidate_targets(maze, chosen_candidate_idx);
-        choose_random_target(maze, target_count, chosen_candidate_idx);
+        int rdm_num = rand() % target_count; 
+        choose_random_target(maze, rdm_num, chosen_candidate_idx);
     }
 
     // Set the start and goal.
@@ -120,8 +122,8 @@ void fill_maze(Maze *maze)
 void play()
 {
     Vector2 dims = {
-        .x = 7,
-        .y = 9,
+        .x = 21,
+        .y = 21,
     };
 
     Maze maze = alloc_maze(dims);
@@ -191,7 +193,7 @@ int main()
     // Initialize the maze
     setlocale(LC_ALL, "");
 
-    // srand((unsigned int)time(NULL)); //TODO: enable this when maze generation is done.
+    srand((unsigned int)time(NULL)); //TODO: enable this when maze generation is done.
 
     // Ensure that all characters we use to print the maze are indeed of printing width 2.
     assert(wcwidth(U'😃') == MAZE_COL_WIDTH);

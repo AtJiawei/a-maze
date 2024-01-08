@@ -1,6 +1,7 @@
 #include "lib.h"
-#include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 int max(int a, int b)
 {
@@ -105,7 +106,7 @@ bool idx_in_bound(Vector2 idx, Vector2 dims)
     return idx.x >= 0 && idx.x < dims.x && idx.y >= 0 && idx.y < dims.y;
 }
 
-// TO BE TESTED: a function takes the candidate index and return the target count
+// The function takes the candidate index and return the target count
 int prim_count_candidate_targets(Maze *maze, int idx)
 {
     Vector2 sub_dims = to_sub_idx(maze->dims);
@@ -158,11 +159,9 @@ int maze_cell_count(Maze *maze)
     return maze->dims.x * maze->dims.y;
 }
 
-// TO BE TESTED: a function takes the candidate count and returns the candidate index
-int prim_choose_random_candidate(Maze *maze, int candidate_count)
+// The function takes a rdm number ( from 0 to candidate count) and returns the 1D candidate index in a maze
+int prim_pick_random_candidate(Maze *maze, int rdm)
 {
-    int rdm = rand() % candidate_count;
-
     int counter = 0;
     Vector2 sub_dims = to_sub_idx(maze->dims);
     for (int y = 0; y < sub_dims.y; y++)
@@ -180,16 +179,13 @@ int prim_choose_random_candidate(Maze *maze, int candidate_count)
             }
         }
     }
-
     // if we reach here, the candidate count was incorrect and the randome number picked was larger than the actual candidate count
     assert(false);
 }
 
-// TO BE TESTED. This function returns the 1D maze index of the random target
-void choose_random_target(Maze *maze, int target_count, int candidate_index)
+// TO BE TESTED
+void choose_random_target(Maze *maze, int rdm_num, int candidate_index) // int target_count was deleted for testing purpose
 {
-    int rdm = rand() % target_count;
-
     int counter = 0;
 
     Vector2 sub_dims = to_sub_idx(maze->dims);
@@ -207,12 +203,13 @@ void choose_random_target(Maze *maze, int target_count, int candidate_index)
         Vector2 adj_sub_idx = vector2_add(sub_idx, deltas[i]);
         if (idx_in_bound(adj_sub_idx, sub_dims) && sub_maze_cell(maze, adj_sub_idx) == CELL_WALL)
         {
-            if (counter == rdm)
+            
+            if (counter == rdm_num)
             {
-                int new_path_idx = idx_2to1(
-                    vector2_add(deltas[i], idx_1to2(candidate_index, maze->dims)),
-                    maze->dims);
-                maze->cells[new_path_idx] = CELL_PATH;
+                int new_path_idx =
+                    idx_2to1(from_sub_idx(vector2_add(deltas[i], to_sub_idx(idx_1to2(candidate_index, maze->dims)))), maze->dims);
+
+                 maze->cells[new_path_idx] = CELL_PATH;
 
                 if (i == 0)
                 {
@@ -230,25 +227,8 @@ void choose_random_target(Maze *maze, int target_count, int candidate_index)
                 {
                     maze->cells[candidate_index + 1] = CELL_PATH;
                 }
+                
                 break;
-                // below is one option to connect the path. I think it is safer unless we can guarantee the order of the deltas array is unchangeable;
-                // int d_idx = new_path_idx - candidate_index
-                // if (d_idx == 2)
-                // {
-                //     maze->cells[candidate_index + 1] = CELL_PATH;
-                // }
-                // if (d_idx == -2)
-                // {
-                //     maze->cells[candidate_index - 1] = CELL_PATH;
-                // }
-                // if (d_idx == 2 * maze.dims.x)
-                // {
-                //     maze->cells[candidate_index + maze.dims.x] = CELL_PATH;
-                // }
-                // if (d_idx == -(2 * maze.dims.x))
-                // {
-                //     maze->cells[candidate_index - maze.dims.x] = CELL_PATH;
-                // }
             }
             counter++;
         }

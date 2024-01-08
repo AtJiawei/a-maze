@@ -179,7 +179,66 @@ void test_prim_is_candidate()
     assert(!prim_is_candidate(&maze, cand_idx));
 }
 
-void 
+void test_pick_random_candidate()
+{
+    Maze maze = test_maze(
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wpppwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n"
+        "wwwwwww\n");
+    int rdm = 1;
+    int correct_picked_candidate_idx = idx_2to1(vector2(3,3), maze.dims);
+    assert(prim_pick_random_candidate(&maze, rdm) == correct_picked_candidate_idx);
+}
+
+void test_prim_count_candidate_targets()
+{
+    Maze maze = test_maze(
+        "wwwwwww\n"
+        "wwwwwpw\n"
+        "wwwwwww\n"
+        "wpppppw\n"
+        "wwwwwww\n"
+        "wpwwwpw\n"
+        "wwwwwww\n");
+    
+    int idx = idx_2to1(vector2(3,3),maze.dims);
+    assert(prim_count_candidate_targets(&maze, idx) == 2);
+    idx = idx_2to1(vector2(1,3),maze.dims);
+    assert(prim_count_candidate_targets(&maze, idx) == 1);
+    idx = idx_2to1(vector2(5,3),maze.dims);
+    assert(prim_count_candidate_targets(&maze, idx) == 0);
+    idx = idx_2to1(vector2(5,5),maze.dims);
+    assert(prim_count_candidate_targets(&maze, idx) == 1);
+}
+
+void test_choose_random_target()
+{
+    Maze maze = test_maze(
+        "wwwwwww\n"
+        "wwwwwpw\n"
+        "wwwwwww\n"
+        "wpppppw\n"
+        "wwwwwww\n"
+        "wpwwwpw\n"
+        "wwwwwww\n");
+    int candidate_index = idx_2to1(vector2(3,3), maze.dims);// 
+    int rdm_num = 1; // assume chosen target is (3,5)
+
+    int correct_new_path_idx = idx_2to1(vector2(3,5), maze.dims);
+    choose_random_target(&maze, rdm_num, candidate_index);
+
+    assert(maze.cells[correct_new_path_idx] == CELL_PATH);
+
+    assert(maze.cells[candidate_index + 7] == CELL_PATH);
+    assert(maze.cells[candidate_index - 1] == CELL_PATH);
+    assert(maze.cells[candidate_index + 1] == CELL_PATH);
+    assert(maze.cells[candidate_index - 7] != CELL_PATH);
+
+}
 
 int main()
 {
@@ -190,6 +249,9 @@ int main()
     test_idx_1to2();
     test_fill_cell_with();
     test_prim_is_candidate();
+    test_pick_random_candidate();
+    test_prim_count_candidate_targets();
+    test_choose_random_target();
 
     printf("\nTests Passed!\n");
 }

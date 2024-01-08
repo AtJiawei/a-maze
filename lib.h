@@ -75,9 +75,11 @@ int prim_count_candidates(Maze *maze);
 int maze_cell_count(Maze *maze);
 
 // The function returns a 1D maze index of a chosen candidate for path expansion
-int prim_choose_random_candidate(Maze *maze, int candidate_counter);
+int prim_pick_random_candidate(Maze *maze, int rdm);
+
+// The function returns a random number
 
 // The function takes an index (1D) of chosen expansion candidate in maze and return the count of target;
 int prim_count_candidate_targets(Maze *maze, int idx);
 
-void choose_random_target(Maze *maze, int target_count, int candidate_index);
+void choose_random_target(Maze *maze, int rdm_num, int candidate_index);
