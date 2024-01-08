@@ -206,10 +206,7 @@ void choose_random_target(Maze *maze, int rdm_num, int candidate_index) // int t
             
             if (counter == rdm_num)
             {
-                int new_path_idx =
-                    idx_2to1(from_sub_idx(vector2_add(deltas[i], to_sub_idx(idx_1to2(candidate_index, maze->dims)))), maze->dims);
-
-                 maze->cells[new_path_idx] = CELL_PATH;
+                *sub_maze_cell_ptr(maze,adj_sub_idx) = CELL_PATH;
 
                 if (i == 0)
                 {
@@ -227,7 +224,7 @@ void choose_random_target(Maze *maze, int rdm_num, int candidate_index) // int t
                 {
                     maze->cells[candidate_index + 1] = CELL_PATH;
                 }
-                
+
                 break;
             }
             counter++;
