@@ -13,3 +13,5 @@ For a streamlined experience, it is recommended to use [Bazel](https://skia.goog
 As the program has become more complex, an emphasis has been placed on testing major functions for pre-checking and debugging. Automatic tests have been implemented to verify the functionality of key functions.
 
 To facilitate automatic testing, the testing functions and corresponding headers are separated into different files. In more recent versions, aside from the main file <maze.c>, the header file <lib.h> and the source file <lib.c> must also be downloaded to ensure proper execution of the program.
+
+![a-maze](./a-maze.gif)
