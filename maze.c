@@ -172,7 +172,10 @@ void play()
         {
             clear();
             mvaddstr(start.y + player.y, start.x + player.x * MAZE_COL_WIDTH, VICTORY);
-            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON! Game Ended! Total Steps Taken: %i. This window will be closed automatically in 5 seconds. To quit immediately,press any key to close the window.", counter);
+            mvprintw(MSG_COL, MSG_ROW, "Congratulations! You have WON!\n");
+            mvprintw(MSG_COL + 2, MSG_ROW,  "Total Steps Taken: %i.\n", counter);
+            mvprintw(MSG_COL + 4, MSG_ROW, "This window will be CLOSED automatically in 5 seconds.\n");
+            mvprintw(MSG_COL + 6, MSG_ROW, "To quit immediately,press ANY key to close the window.");
             break;
         }
     }
